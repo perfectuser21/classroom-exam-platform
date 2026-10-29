@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {labelmeWheelhouses} from './labelme-wheelhouse-manifests.mjs';
+test('标注软件候选包明确锁定两个 Python 版本和摘要',()=>{const rows=labelmeWheelhouses();assert.equal(rows.length,2);assert.deepEqual(rows.map(x=>x.python),[['3.12'],['3.13']]);for(const row of rows){assert.equal(row.software,'labelme');assert.equal(row.version,'7.9.1');assert.ok(row.size>0);assert.match(row.sha256,/^[a-f0-9]{64}$/)}});

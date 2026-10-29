@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createCandidateMoodle} from './candidate-moodle.mjs';
+const info={username:'student_06',surname:'张',givenName:'三'};
+test('考生创建必须核对 Moodle 返回用户名与编号',async()=>{const service=createCandidateMoodle({checkInvoke:async()=>JSON.stringify({available:true}),createInvoke:async()=>JSON.stringify({username:info.username,userId:9})});await service.check(info);assert.deepEqual(await service.create(info,'Password!123456789'),{userId:9});const bad=createCandidateMoodle({checkInvoke:async()=>JSON.stringify({available:true}),createInvoke:async()=>JSON.stringify({username:'other',userId:9})});await assert.rejects(()=>bad.create(info,'Password!123456789'))});
+test('用户名不可用或人数已满时不继续',async()=>{const service=createCandidateMoodle({checkInvoke:async()=>JSON.stringify({available:false}),createInvoke:async()=>{throw Error('must not run')}});await assert.rejects(()=>service.check(info))});

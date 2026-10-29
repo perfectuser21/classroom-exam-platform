@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {assignedStudents} from './assigned-students.mjs';
+test('按试卷版本读取本场名单，未分配时为空，异常记录不能误显示所有考生',()=>{const jobs=[{status:'prepared',groups:[{quizId:10,studentIds:[1,2]},{quizId:11,studentIds:[3,4,5]}]}];assert.deepEqual(assignedStudents(jobs,10),[1,2]);assert.deepEqual(assignedStudents(jobs,99),[]);assert.throws(()=>assignedStudents([{status:'unknown',groups:[{quizId:10,studentIds:[1]}]}],10));assert.throws(()=>assignedStudents([...jobs,...jobs],10))});

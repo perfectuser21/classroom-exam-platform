@@ -1,0 +1,15 @@
+{
+  "name": "classroom-exam-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Classroom examination management integration",
+  "dependencies": {
+    "meshcentral": "1.3.1",
+    "sharp": "0.35.5"
+  },
+  "overrides": {
+    "compression": "1.8.2",
+    "node-forge": "1.4.2",
+    "qs": "6.17.0"
+  }
+}

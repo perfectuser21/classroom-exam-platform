@@ -1,0 +1,3 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {AdminLimiter} from './admin-limiter.mjs';
+test('错误次数过多后暂时限制，到期或正确登录可恢复',()=>{let now=0;const l=new AdminLimiter({clock:()=>now,maxAttempts:3,windowMs:60000});assert.equal(l.allowed('a'),true);l.fail('a');l.fail('a');l.fail('a');assert.equal(l.allowed('a'),false);assert.equal(l.allowed('b'),true);now=60001;assert.equal(l.allowed('a'),true);l.fail('a');l.success('a');assert.equal(l.allowed('a'),true)});
+test('地址桶数量有界',()=>{const l=new AdminLimiter({maxBuckets:2});for(const x of ['a','b','c'])l.fail(x);assert.ok(l.buckets.size<=2)});

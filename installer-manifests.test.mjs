@@ -1,0 +1,2 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {installerManifests} from './installer-manifests.mjs';
+test('列出固定来源、版本、大小和摘要的教学软件安装包',()=>{const items=installerManifests();assert.deepEqual(items.map(x=>x.id),['anaconda','praat','sqlite']);for(const x of items){assert.ok(x.source.startsWith('https://'));assert.ok(x.size>0);assert.match(x.sha256,/^[a-f0-9]{64}$/)}assert.match(items[2].officialDigest,/^sha3-256:/)});

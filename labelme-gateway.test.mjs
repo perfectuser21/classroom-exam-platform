@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('LabelMe 工作流默认关闭并纳入设备互斥与考前保护',()=>{const source=readFileSync(new URL('./gateway.mjs',import.meta.url),'utf8');assert.match(source,/CLASSROOM_ENABLE_LABELME==='1'/);assert.match(source,/labelme:labelmeJobs/);assert.match(source,/environmentJobs,cleanupPreviewJobs,labelmeJobs/);assert.match(source,/createLabelmeApi/);assert.match(source,/labelmeInstall:/)});

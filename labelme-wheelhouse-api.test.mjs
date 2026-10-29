@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('软件目录从固定候选包清单读取 LabelMe 校验状态',()=>{const source=readFileSync(new URL('./gateway.mjs',import.meta.url),'utf8');assert.match(source,/labelmeWheelhouses\(\)/);assert.match(source,/join\(jobDir,'wheelhouses'\)/);assert.match(source,/\.\.\.labelmeStores/);const catalog=readFileSync(new URL('./software-catalog.mjs',import.meta.url),'utf8');assert.match(catalog,/候选包/);assert.match(catalog,/实机/)});

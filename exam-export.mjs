@@ -1,0 +1,3 @@
+const states={finished:'已交卷',inprogress:'考试中',not_started:'未开始',overdue:'已超时',abandoned:'已放弃'};
+export function csvCell(value){let s=value===null||value===undefined?'':String(value);if(/^[\s\u0000-\u001f]*[=+\-@]/.test(s))s="'"+s;if(/[",\r\n]/.test(s))s='"'+s.replaceAll('"','""')+'"';return s}
+export function examCsv(summary){if(!summary||!Array.isArray(summary.students))throw Error('成绩数据无效');const rows=[['考生编号','姓名','作答状态','Moodle 总成绩','满分'],...summary.students.map(x=>[x.id,x.name,states[x.state]||'状态未知',x.score,x.maxScore])];return '\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n')+'\r\n'}

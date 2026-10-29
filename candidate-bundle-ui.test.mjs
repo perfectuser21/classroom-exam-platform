@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('考生能勾选文件并合并为同任务的答卷',()=>{const html=readFileSync(new URL('./candidate.html',import.meta.url),'utf8');assert.match(html,/id="candidate-bundle-button"/);assert.match(html,/api\('upload-bundle',\{quiz:currentQuizId,task,ids\},uploadAbort\.signal\)/);assert.match(html,/input\.dataset\.bundleId=item\.id/);assert.match(html,/input\.dataset\.taskId=item\.taskId/);assert.match(html,/选择同一任务/);});

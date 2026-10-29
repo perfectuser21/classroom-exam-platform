@@ -1,0 +1,8 @@
+import {filename} from './artifact-store.mjs';
+const same=(a,b)=>a&&b&&a.studentId===b.studentId&&a.attemptId===b.attemptId&&a.deadline===b.deadline&&a.device===b.device;
+export class CandidateMaterials{
+ constructor({authorize,visibility,list,read,markStarted=()=>{},clock=Date.now,maxConcurrent=2}){Object.assign(this,{authorize,visibility,listStore:list,readStore:read,markStarted,clock,maxConcurrent});this.active=0}
+ async check(quizId,token){if(!Number.isSafeInteger(quizId)||quizId<1||typeof token!=='string'||!token)throw Error('考试不可用');const identity=await this.authorize(quizId,token);if(!identity||!Number.isFinite(identity.deadline)||this.clock()>=identity.deadline)throw Error('考试已结束');return identity}
+ async list(quizId,token){const first=await this.check(quizId,token),exam='exam-'+quizId,rows=await this.listStore(exam);if(!Array.isArray(rows)||rows.length>1000)throw Error('素材不可用');const second=await this.check(quizId,token);if(!same(first,second))throw Error('考试状态已变化');return rows.filter(x=>x.exam===exam&&this.visibility.visible(exam,x.id)).map(({id,name,size})=>({id,name:filename(name),size}))}
+ async read(quizId,id,token){if(this.active>=this.maxConcurrent)throw Error('下载繁忙');this.active++;try{const first=await this.check(quizId,token),exam='exam-'+quizId;if(!this.visibility.visible(exam,id))throw Error('素材不可用');const result=await this.readStore(id);if(!result?.record||result.record.id!==id||result.record.exam!==exam||!Buffer.isBuffer(result.data)||result.data.length!==result.record.size)throw Error('素材校验失败');filename(result.record.name);const second=await this.check(quizId,token);if(!same(first,second)||!this.visibility.visible(exam,id))throw Error('素材已撤回或考试已结束');this.markStarted(exam);return result}finally{this.active--}}
+}

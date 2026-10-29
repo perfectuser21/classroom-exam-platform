@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {parseAnacondaProbe,anacondaProbeCommand} from './anaconda-probe.mjs';
+test('只接受完整预检回执，已有环境保守停止',()=>{const value=parseAnacondaProbe('CLASSROOM_ANACONDA_PROBE:{"probe":"complete","existing":false,"targetExists":false,"dFreeBytes":20000000000}');assert.equal(value.existing,false);assert.equal(value.usable,false);assert.equal(value.installerVerified,undefined)});
+test('缺少字段、多条回执或无效空间均不得继续',()=>{for(const s of ['','CLASSROOM_ANACONDA_PROBE:{}','CLASSROOM_ANACONDA_PROBE:{"probe":"complete","existing":false,"targetExists":false,"dFreeBytes":-1}','CLASSROOM_ANACONDA_PROBE:{}\nCLASSROOM_ANACONDA_PROBE:{}'])assert.throws(()=>parseAnacondaProbe(s))});
+test('远程预检只生成固定编码命令',()=>assert.match(anacondaProbeCommand(),/^powershell\.exe -NoProfile -NonInteractive -EncodedCommand /));

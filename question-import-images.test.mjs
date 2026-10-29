@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {normalizeImportImages} from './question-import-images.mjs';import {validateImportRows} from './question-import.mjs';
+const values=[5,'单选','看图','甲','乙',null,null,null,null,null,null,null,null,'A',1];
+test('题目图片规范化后仅保存在预检内部，不返回原始编码',async()=>{const [row]=await normalizeImportImages([{row:2,values,image:Buffer.from('x').toString('base64')}],async()=>Buffer.from('png'));assert.equal(row.image,undefined);assert.equal(row.importImage.toString(),'png');assert.equal(validateImportRows([row],[]).errors.length,0)});
+test('损坏图片产生对应行错误，不能提交',async()=>{const rows=await normalizeImportImages([{row:2,values,image:'invalid!'}],async()=>Buffer.from('png'));const result=validateImportRows(rows,[]);assert.equal(result.errors[0].row,2);assert.match(result.errors[0].message,/图片/)});

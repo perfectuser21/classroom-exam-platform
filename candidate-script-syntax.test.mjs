@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+test('考生页完整模块脚本必须通过 JavaScript 语法检查',()=>{const html=readFileSync(new URL('./candidate.html',import.meta.url),'utf8'),scripts=[...html.matchAll(/<script type="module">([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,1);const result=spawnSync(process.execPath,['--check','--input-type=module'],{input:scripts[0][1],encoding:'utf8'});assert.equal(result.status,0,result.stderr)});

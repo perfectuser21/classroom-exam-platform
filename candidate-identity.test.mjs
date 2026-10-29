@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {candidateIdentityPrompt} from './candidate-identity.mjs';
+test('核对姓名、编号和工位，并说明需考务核验证件',()=>{const text=candidateIdentityPrompt({id:7,name:'张三',device:'PC1'});assert.match(text,/张三/);assert.match(text,/7/);assert.match(text,/PC1/);assert.match(text,/考务/);assert.match(candidateIdentityPrompt({id:7,name:'张三',device:null}),/未绑定/);assert.throws(()=>candidateIdentityPrompt({id:0,name:'',device:null}))});

@@ -1,0 +1,5 @@
+import {execFileSync} from 'node:child_process';
+import {runtimeManifest} from './backup-runtime-manifest.mjs';
+const docker=process.env.CLASSROOM_DOCKER||'docker';
+function digest(container,repository){const id=execFileSync(docker,['inspect','--format','{{.Image}}',container],{encoding:'utf8',timeout:10000}).trim();if(!/^sha256:[0-9a-f]{64}$/.test(id))throw Error('容器镜像不可用');const raw=execFileSync(docker,['image','inspect','--format','{{json .RepoDigests}}',id],{encoding:'utf8',timeout:10000});const entries=JSON.parse(raw);if(!Array.isArray(entries))throw Error('镜像摘要不可用');const matches=entries.filter(x=>typeof x==='string'&&x.startsWith(repository+'@sha256:'));if(matches.length!==1)throw Error('镜像摘要不可唯一确认');return matches[0]}
+const npm=execFileSync('npm',['--version'],{encoding:'utf8',timeout:10000}).trim();const manifest=runtimeManifest({node:process.version,npm,architecture:process.arch,moodleImage:digest('classroom_moodle_pilot-webserver-1','moodlehq/moodle-php-apache'),databaseImage:digest('classroom_moodle_pilot-db-1','postgres')});process.stdout.write(JSON.stringify(manifest)+'\n');

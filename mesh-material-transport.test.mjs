@@ -1,0 +1,6 @@
+import {test} from 'node:test';
+import {strict as assert} from 'node:assert';
+import {makeMeshMaterialTransport} from './mesh-material-transport.mjs';
+const plan={device:'A',directory:'E:\\ClassroomExam\\exam-1\\student-1\\materials\\d-123',name:"考题's.zip",size:3,sha256:'a'.repeat(64)};
+test('目录准备和校验只执行编码的固定脚本，且绑定正确设备',async()=>{let calls=[];const transport=makeMeshMaterialTransport({command:async(device,command)=>{calls.push({device,command});return calls.length===1?'CLASSROOM_DIRECTORY_READY':'CLASSROOM_HASH:3:'+plan.sha256},upload:async()=>{}});await transport.prepare(plan);const result=await transport.verify(plan);assert.deepEqual(result,{size:3,sha256:plan.sha256});assert.equal(calls[0].device,'A');assert.match(calls[0].command,/^powershell\.exe -NoProfile -NonInteractive -EncodedCommand /);assert.equal(calls[0].command.includes(plan.name),false);let decoded=Buffer.from(calls[0].command.split(' ').at(-1),'base64').toString('utf16le');assert.match(decoded,/ReparsePoint/);assert.match(decoded,/New-Item/)});
+test('没有确切目录确认或远端校验回执必须失败',async()=>{const transport=makeMeshMaterialTransport({command:async()=>'',upload:async()=>{}});await assert.rejects(()=>transport.prepare(plan));await assert.rejects(()=>transport.verify(plan))});

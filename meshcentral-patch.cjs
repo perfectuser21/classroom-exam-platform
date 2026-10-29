@@ -1,0 +1,3 @@
+'use strict';
+module.exports=function patchMeshCentral(source){for(const [before,after] of [["'compression@1.8.1'","'compression@1.8.2'"],["'node-forge@1.4.0'","'node-forge@1.4.2'"]]){if(source.split(before).length!==2)throw Error('MeshCentral 启动依赖检查不符合预期');source=source.replace(before,after)}return source};
+module.exports.authenticode=function patchAuthenticode(source){const before="Buffer.from(args.desc, 'ucs2').toString()",after="Buffer.from(args.desc, 'ucs2').toString('binary')";if(source.split(before).length!==3)throw Error('MeshCentral 签名代码不符合预期');return source.replaceAll(before,after)};

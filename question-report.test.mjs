@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {questionErrorCsv} from './question-report.mjs';
+test('错误报告保留行号、转义引号并阻止公式注入',()=>{const s=questionErrorCsv([{row:2,message:'选项缺失'},{row:3,message:'=危险,"文本"'}]);assert.ok(s.startsWith('\ufeff'));assert.match(s,/2,选项缺失/);assert.match(s,/'=危险/);assert.match(s,/""文本""/)});
+test('拒绝错误报告畸形或超限数据',()=>{assert.throws(()=>questionErrorCsv([{row:-1,message:'x'}]));assert.throws(()=>questionErrorCsv(Array.from({length:1001},()=>({row:1,message:'x'}))))});
+test('Word 错误报告使用表格序号，与预检页面一致',()=>{const s=questionErrorCsv([{row:2,message:'题干为空'},{row:4,message:'选项缺失'},{row:0,message:'文档错误'}],'word');assert.match(s,/位置,错误/);assert.match(s,/第 1 个表格,题干为空/);assert.match(s,/第 3 个表格,选项缺失/);assert.match(s,/文档整体,文档错误/);assert.throws(()=>questionErrorCsv([{row:2,message:'错误'}],'other'))});

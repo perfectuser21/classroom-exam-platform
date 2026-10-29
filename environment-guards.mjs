@@ -1,0 +1,2 @@
+export function hasSoftwareLock(name,stores){if(typeof name!=='string'||!Array.isArray(stores)||stores.some(x=>!x?.locks||typeof x.locks.has!=='function'))throw Error('设备任务状态不可用');return stores.some(x=>x.locks.has(name))}
+export function ensureSeatsNotInstalling(seats,stores){if(!Array.isArray(seats))throw Error('工位状态不可用');if(seats.some(x=>!x||typeof x.device!=='string'||hasSoftwareLock(x.device,stores)))throw Error('工位存在进行中或结果待核实的设备任务')}

@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {runtimeManifest} from './backup-runtime-manifest.mjs';
+const input={node:'v26.8.2',npm:'11.19.1',architecture:'arm64',moodleImage:'moodlehq/moodle-php-apache@sha256:'+'a'.repeat(64),databaseImage:'postgres@sha256:'+'b'.repeat(64)};
+test('恢复清单记录 Node、平台和固定镜像摘要',()=>{const result=runtimeManifest(input);assert.equal(result.node,'v26.8.2');assert.equal(result.moodleImage,input.moodleImage);assert.deepEqual(Object.keys(result).sort(),['architecture','databaseImage','moodleImage','node','npm','version'])});
+test('镜像缺少固定摘要或版本无效时不得报告可恢复',()=>{assert.throws(()=>runtimeManifest({...input,moodleImage:'moodlehq/moodle-php-apache:8.3'}));assert.throws(()=>runtimeManifest({...input,databaseImage:'postgres@sha256:bad'}));assert.throws(()=>runtimeManifest({...input,node:'invalid'}));assert.throws(()=>runtimeManifest({...input,architecture:'unknown'}))});
