@@ -1,0 +1,28 @@
+name: 验证考试工作台
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: 安装 Node 依赖
+        run: npm ci
+      - name: 准备 Python 检查环境
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install packaging==25.0
+          CLASSROOM_XLSX_PYTHON="$(command -v python)" bash workflows/bootstrap-xlsx-runtime.sh
+      - name: 运行自动测试
+        run: node --test *.test.mjs
