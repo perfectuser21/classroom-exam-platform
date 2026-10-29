@@ -22,7 +22,7 @@ jobs:
       - name: 准备 Python 检查环境
         run: |
           python -m venv .venv
-          .venv/bin/python -m pip install packaging==25.0
+          .venv/bin/python -m pip install packaging==25.0 -r xlsx-requirements.txt
           CLASSROOM_XLSX_PYTHON="$(command -v python)" bash workflows/bootstrap-xlsx-runtime.sh
       - name: 运行自动测试
         run: node --test *.test.mjs
