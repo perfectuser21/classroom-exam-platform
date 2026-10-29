@@ -1,0 +1,2 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {runtimeBin} from './runtime-bins.mjs';
+test('使用默认程序或显式绝对路径，不接受相对路径和未知命令',()=>{assert.equal(runtimeBin('op',{}),'op');assert.equal(runtimeBin('docker',{CLASSROOM_DOCKER_BIN:'/usr/local/bin/docker'}),'/usr/local/bin/docker');assert.throws(()=>runtimeBin('op',{CLASSROOM_OP_BIN:'../op'}));assert.throws(()=>runtimeBin('anything',{}))});

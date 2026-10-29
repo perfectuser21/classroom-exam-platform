@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {recoveryDraft} from './draft-recovery.mjs';
+test('生成带考试与答卷编号的本机未同步草稿，保留答案但不包含登录凭据',()=>{const result=recoveryDraft({quiz:21,attempt:30,answers:{'q1:1_answer':'测试'},now:'2026-01-01T00:00:00.000Z'});assert.equal(result.quiz,21);assert.equal(result.attempt,30);assert.equal(result.answers['q1:1_answer'],'测试');assert.equal(JSON.stringify(result).includes('password'),false)});
+test('空草稿和无效答卷不应导出',()=>{assert.throws(()=>recoveryDraft({quiz:1,attempt:2,answers:{},now:'2026-01-01'}));assert.throws(()=>recoveryDraft({quiz:0,attempt:2,answers:{a:'x'},now:'2026-01-01'}))});

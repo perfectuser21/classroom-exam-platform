@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('阅卷端逐个显示合并答卷文件的检查结果，名称以文本插入',()=>{const html=readFileSync(new URL('./frontend.html',import.meta.url),'utf8');assert.match(html,/data\.kind==='bundle'/);assert.match(html,/file\.name/);assert.match(html,/formatPracticalInspection\(file\.inspection\)/);assert.match(html,/row\.textContent=/)});
+test('检查大小限制提示使用服务端返回的上限',()=>{const html=readFileSync(new URL('./frontend.html',import.meta.url),'utf8');assert.match(html,/data\.maxBytes\s*\/\s*1048576/);assert.doesNotMatch(html,/文件超过 5 MB，未进行自动检查/)});

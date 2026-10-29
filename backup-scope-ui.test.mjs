@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('备份页面说明源码、软件包及凭据的覆盖边界',()=>{const html=readFileSync(new URL('./frontend.html',import.meta.url),'utf8'),section=html.match(/<section class="panel" id="backup-panel"[^]*?<\/section>/)?.[0]||'';assert.match(section,/源码/);assert.match(section,/安装包/);assert.match(section,/凭据/);assert.match(section,/异地/)});

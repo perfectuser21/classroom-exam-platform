@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {prepareExamRelease} from './exam-release.mjs';
+const assignment={paperId:'p1',status:'prepared',groups:[{version:'A',quizId:10,courseModuleId:20,studentIds:[1,2,3]},{version:'B',quizId:11,courseModuleId:21,studentIds:[4,5]}],receipt:[{version:'A',groupId:30,courseModuleId:20,count:3},{version:'B',groupId:31,courseModuleId:21,count:2}]};
+test('只开放已核验分配的两份试卷',()=>{const plan=prepareExamRelease(assignment);assert.equal(plan.paperId,'p1');assert.deepEqual(plan.groups.map(x=>x.groupId),[30,31]);assert.deepEqual(plan.groups[0].studentIds,[1,2,3])});
+test('未完成分配、重复分组或回执不一致均不能开放',()=>{for(const x of [{...assignment,status:'unknown'},{...assignment,receipt:[assignment.receipt[0],{...assignment.receipt[1],groupId:30}]},{...assignment,receipt:[{...assignment.receipt[0],count:2},assignment.receipt[1]]}])assert.throws(()=>prepareExamRelease(x))});

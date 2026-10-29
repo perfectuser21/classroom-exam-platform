@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {UploadLocks} from './candidate-upload-locks.mjs';
+test('首次上传前持久锁定该场考试，重启后工位仍不可改',()=>{let rows=[];const storage={load:()=>structuredClone(rows),save:x=>rows=structuredClone(x)},locks=new UploadLocks({storage});locks.mark('exam-21');locks.mark('exam-21');assert.equal(rows.length,1);assert.equal(new UploadLocks({storage}).hasAny(['exam-22','exam-21']),true)});
+test('锁记录无法保存时不得继续上传',()=>{const locks=new UploadLocks({storage:{load:()=>[],save:()=>{throw Error('disk')}}});assert.throws(()=>locks.mark('exam-21'));assert.equal(locks.hasAny(['exam-21']),false)});

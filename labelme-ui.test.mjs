@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('LabelMe 页面展示固定工作流且未验收时按钮禁用',()=>{const html=readFileSync(new URL('./frontend.html',import.meta.url),'utf8');assert.match(html,/item\.id==='labelme'/);assert.match(html,/!cap\.labelmeInstall/);assert.match(html,/LabelMe 流程待 Windows 实机验证/);assert.match(html,/\/api\/labelme-jobs/);assert.match(html,/图形启动待验证/)});

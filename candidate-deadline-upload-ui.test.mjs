@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('截止时中止正在进行的文件请求，结束后重试自动交卷',()=>{const html=readFileSync(new URL('./candidate.html',import.meta.url),'utf8');assert.match(html,/uploadAbort\?\.abort\(\)/);assert.match(html,/signal:uploadAbort\.signal/);assert.match(html,/uploading=false;uploadAbort=null;button\.disabled=false;if\(expired&&!finished\)submitAttempt\(false,true\)/);assert.match(html,/!automatic&&\(imagePending\|\|imageFailed\)/)});

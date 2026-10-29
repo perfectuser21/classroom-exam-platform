@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {spawnSync} from 'node:child_process';
+test('管理工作台脚本语法正确',()=>{const html=readFileSync(new URL('./frontend.html',import.meta.url),'utf8'),scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];assert.equal(scripts.length,1);const result=spawnSync(process.execPath,['--check'],{input:scripts[0][1],encoding:'utf8'});assert.equal(result.status,0,result.stderr)});

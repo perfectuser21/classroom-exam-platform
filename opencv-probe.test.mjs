@@ -1,0 +1,2 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {readOpenCv} from './opencv-probe.mjs';
+test('识别真实版本并区分未安装和检查失败',()=>{assert.deepEqual(readOpenCv({status:'ok',version:'4.13.0'}),{status:'ready',version:'4.13.0'});assert.deepEqual(readOpenCv({status:'missing'}),{status:'missing'});assert.deepEqual(readOpenCv({status:'error'}),{status:'error'});assert.throws(()=>readOpenCv({status:'ok',version:''}));});

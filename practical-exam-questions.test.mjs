@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {practicalExamQuestions} from './practical-exam-questions.mjs';
+test('阅卷只能选择已关联当前考试的实操题',()=>{const tasks=[{id:'t1',title:'一'},{id:'t2',title:'二'}],materials=[{exam:'exam-1',taskbookId:'t1'},{exam:'exam-2',taskbookId:'t2'}];assert.deepEqual(practicalExamQuestions('exam-1',materials,tasks),[tasks[0]]);assert.deepEqual(practicalExamQuestions('exam-3',materials,tasks),[])});

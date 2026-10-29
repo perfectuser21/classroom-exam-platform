@@ -1,0 +1,4 @@
+function nonnegative(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<0)throw Error('考试时间无效');return n}
+export function examDeadline(attempt,quiz){const start=nonnegative(attempt?.timestart),limit=nonnegative(quiz?.timelimit??0),close=nonnegative(quiz?.timeclose??0);if(!start)throw Error('考试开始时间无效');const times=[];if(limit)times.push(start+limit);if(close)times.push(close);if(times.some(x=>!Number.isSafeInteger(x)))throw Error('考试时间无效');return times.length?Math.min(...times):null}
+export function remainingSeconds({deadline,serverNow,elapsedMs}){if(!Number.isFinite(deadline)||!Number.isFinite(serverNow)||!Number.isFinite(elapsedMs)||elapsedMs<0)throw Error('计时数据无效');return Math.max(0,Math.ceil(deadline-serverNow-elapsedMs/1000))}
+export function formatRemaining(seconds){if(!Number.isSafeInteger(seconds)||seconds<0)throw Error('计时数据无效');return [Math.floor(seconds/3600),Math.floor(seconds%3600/60),seconds%60].map(x=>String(x).padStart(2,'0')).join(':')}

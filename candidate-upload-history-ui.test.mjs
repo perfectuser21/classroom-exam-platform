@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+test('考生可刷新已提交文件，列表以文本方式显示并在上传后重新读取',()=>{const html=readFileSync(new URL('./candidate.html',import.meta.url),'utf8');assert.match(html,/id="candidate-history"/);assert.match(html,/id="candidate-history-refresh"/);assert.match(html,/api\('upload-history',\{quiz\}\)/);assert.match(html,/row\.textContent=/);assert.match(html,/loadCandidateHistory\(currentQuizId\)/);assert.doesNotMatch(html,/candidate-history[^;]*innerHTML/)});

@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {decideOpenCvAction} from './opencv-workflow.mjs';
+test('已有 OpenCV 时保留环境，不确定时不得安装',()=>{assert.equal(decideOpenCvAction({status:'ready',version:'4.13.0'}),'already_ready');assert.equal(decideOpenCvAction({status:'missing'}),'install');assert.equal(decideOpenCvAction({status:'error'}),'stop');assert.throws(()=>decideOpenCvAction({status:'ready',version:''}));});
+test('OpenCV 目标 Python 与 Anaconda 安装目录一致',async()=>{const {readFile}=await import('node:fs/promises');const script=await readFile(new URL('./workflows/prepare-opencv.ps1',import.meta.url),'utf8');assert.match(script,/D:\\Anaconda3\\python\.exe/)});
+test('已有不同版本不能被当作目标版本就绪',()=>{assert.equal(decideOpenCvAction({status:'ready',version:'4.8.1'}),'stop')});

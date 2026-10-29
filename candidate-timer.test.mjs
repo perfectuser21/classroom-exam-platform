@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {examDeadline,remainingSeconds,formatRemaining} from './candidate-timer.mjs';
+test('按考试时限和统一结束时间中较早者计算截止时间',()=>{assert.equal(examDeadline({timestart:1000},{timelimit:3600,timeclose:3000}),3000);assert.equal(examDeadline({timestart:1000},{timelimit:3600,timeclose:0}),4600);assert.equal(examDeadline({timestart:1000},{timelimit:0,timeclose:0}),null)});
+test('以服务器时间和单调计时计算剩余秒数，防止电脑时钟偏差',()=>{assert.equal(remainingSeconds({deadline:4600,serverNow:1000,elapsedMs:90000}),3510);assert.equal(remainingSeconds({deadline:1001,serverNow:1000,elapsedMs:5000}),0);assert.equal(formatRemaining(3661),'01:01:01');assert.equal(formatRemaining(59),'00:00:59')});
+test('异常时间不允许编造计时结果',()=>{assert.throws(()=>examDeadline({timestart:0},{timelimit:60,timeclose:0}));assert.throws(()=>remainingSeconds({deadline:10,serverNow:NaN,elapsedMs:0}))});

@@ -1,0 +1,15 @@
+node_modules/
+meshcentral-data
+meshcentral-files/
+meshcentral-backups/
+meshcentral-recordings/
+.env
+*.key
+*.pem
+.venv/
+.venv-xlsx/
+
+/.dev-*
+/.venv
+/.venv-xlsx
+/node_modules

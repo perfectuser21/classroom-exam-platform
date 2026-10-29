@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {renderExamIngress} from './public-ingress-config.mjs';
+test('考试入口固定到专用端口与本机工作台，使用 TLS 和流式上传',()=>{const conf=renderExamIngress({certificate:'/private/cert.pem',privateKey:'/private/key.pem'});assert.match(conf,/listen 18444 ssl/);assert.match(conf,/server_name exam\.zenithjoy\.tech/);assert.match(conf,/proxy_pass http:\/\/127\.0\.0\.1:18100/);assert.match(conf,/client_max_body_size 140m/);assert.match(conf,/proxy_request_buffering off/);assert.doesNotMatch(conf,/listen 443\b/)});
+test('拒绝不安全的证书路径，避免配置注入',()=>{for(const path of ['', '../bad','/a; server {}','/a\n/etc'])assert.throws(()=>renderExamIngress({certificate:path,privateKey:'/safe/key.pem'}))});

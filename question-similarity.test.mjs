@@ -1,0 +1,3 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {similarQuestions} from './question-similarity.mjs';
+test('相似题按相似度排序，保留等级并返回有限结果',()=>{const bank=[{id:'1',level:5,stem:'请说明数据清洗的主要步骤'},{id:'2',level:5,stem:'数据清洗的主要步骤有哪些'},{id:'3',level:4,stem:'数据清洗的主要步骤有哪些'},{id:'4',level:5,stem:'地球的卫星是什么'}];const r=similarQuestions({stem:'数据清洗的主要步骤有哪些',level:5,questions:bank});assert.equal(r[0].id,'2');assert.equal(r[0].score,1);assert.ok(r.some(x=>x.id==='1'));assert.ok(!r.some(x=>x.id==='3'||x.id==='4'))});
+test('拒绝过短、过长与无内容题干，不自动修改题库',()=>{const questions=[{id:'1',level:5,stem:'测试题目'}];for(const stem of ['','A','标'.repeat(5001)])assert.throws(()=>similarQuestions({stem,level:5,questions}));assert.equal(questions.length,1)});

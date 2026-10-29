@@ -1,0 +1,3 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {execFileSync} from 'node:child_process';
+function runPlatform(code){return execFileSync('./.venv/bin/python',['-c',`import runpy\nm=runpy.run_path('workflows/wheel-platform.py')\n${code}`],{encoding:'utf8'}).trim()}
+test('离线轮包只支持 Windows 64 位非自由线程 CPython 3.10 到 3.13',()=>{const s=runPlatform(`\nf=m['platform_info']\nassert f('win32','cpython',(3,13),8,0)=={'status':'supported','python':'3.13'}\nfor a in [('linux','cpython',(3,13),8,0),('win32','pypy',(3,13),8,0),('win32','cpython',(3,13),4,0),('win32','cpython',(3,13),8,1),('win32','cpython',(3,14),8,0)]: assert f(*a)=={'status':'unsupported'}\nprint('ok')`);assert.equal(s,'ok')});

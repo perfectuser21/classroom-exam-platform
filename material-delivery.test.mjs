@@ -1,0 +1,13 @@
+import {test} from 'node:test';
+import {strict as assert} from 'node:assert';
+import {createHash} from 'node:crypto';
+import {planDelivery,deliverMaterial} from './material-delivery.mjs';
+const data=Buffer.from('试题素材');
+const record={id:'11',exam:'exam-1',name:'素材.zip',size:data.length,sha256:createHash('sha256').update(data).digest('hex')};
+const input={exam:'exam-1',record,assignments:[{device:'A',student:'student-1'},{device:'B',student:'student-2'}],available:['A','B'],deliveryId:'d-123'};
+test('素材绑定考试、考生和受管设备，生成各自隔离目录',()=>{const plan=planDelivery(input);assert.equal(plan.length,2);assert.equal(plan[0].directory,'E:\\ClassroomExam\\exam-1\\student-1\\materials\\d-123');assert.notEqual(plan[0].directory,plan[1].directory)});
+test('禁止跨考试、重复考生或设备、越权设备和不安全文件名',()=>{for(const override of [{exam:'exam-2'},{assignments:[{device:'A',student:'s'},{device:'A',student:'t'}]},{assignments:[{device:'A',student:'s'},{device:'B',student:'s'}]},{assignments:[{device:'C',student:'s'}]},{record:{...record,name:'../x.zip'}},{deliveryId:'../bad'}])assert.throws(()=>planDelivery({...input,...override}))});
+test('仅在远端核验大小和 SHA256 一致后报告成功',async()=>{const calls=[];const transport={prepare:async x=>calls.push(['prepare',x]),upload:async(x,d)=>calls.push(['upload',x,d]),verify:async x=>(calls.push(['verify',x]),{size:data.length,sha256:record.sha256})};let r=await deliverMaterial(planDelivery(input)[0],data,transport);assert.equal(r.status,'delivered');assert.deepEqual(calls.map(x=>x[0]),['prepare','upload','verify']);});
+test('本地内容不符时不执行远端动作；远端校验失败不报告成功',async()=>{let calls=0;const transport={prepare:async()=>calls++,upload:async()=>calls++,verify:async()=>({size:data.length,sha256:'0'.repeat(64)})};await assert.rejects(()=>deliverMaterial(planDelivery(input)[0],Buffer.from('changed'),transport));assert.equal(calls,0);let r=await deliverMaterial(planDelivery(input)[0],data,transport);assert.equal(r.status,'failed');});
+test('远端动作超时结果未知，不自动重试',async()=>{let calls=0;let r=await deliverMaterial(planDelivery(input)[0],data,{prepare:async()=>{calls++;throw Error('timeout')},upload:async()=>calls++,verify:async()=>calls++});assert.equal(r.status,'unknown');assert.equal(calls,1)});
+test('开始操作前确认设备离线可安全报告离线，操作后掉线只能标记未知',async()=>{const offline=Object.assign(Error('offline'),{code:'DEVICE_OFFLINE'});let r=await deliverMaterial(planDelivery(input)[0],data,{prepare:async()=>{throw offline}});assert.equal(r.status,'offline');r=await deliverMaterial(planDelivery(input)[0],data,{prepare:async()=>{},upload:async()=>{throw offline}});assert.equal(r.status,'unknown')});

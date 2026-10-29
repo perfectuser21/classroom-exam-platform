@@ -1,0 +1,1 @@
+export function ownsEssayQuiz(jobs,quizId){if(!Array.isArray(jobs)||!Number.isSafeInteger(quizId)||quizId<1)return false;return jobs.flatMap(j=>Array.isArray(j.papers)?j.papers:[]).filter(p=>p.status==='created'&&p.quizId===quizId).length===1}

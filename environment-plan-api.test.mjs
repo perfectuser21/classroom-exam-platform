@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {Readable} from 'node:stream';import {createEnvironmentPlanApi} from './environment-plan-api.mjs';
+function req(body,header='environment-plan'){return Object.assign(Readable.from([JSON.stringify(body)]),{url:'/api/environment-plan-jobs',method:'POST',headers:{'x-classroom-request':header}})}
+function res(){return {writeHead(status){this.status=status},end(value){this.body=JSON.parse(value)}}}
+test('未通过实机验证时一键环境流程不得执行',async()=>{let calls=0;const api=createEnvironmentPlanApi({enabled:()=>false,jobs:{create:()=>calls++}}),response=res();await api(req({names:['pc1']}),response);assert.equal(response.status,503);assert.equal(calls,0)});
+test('启用后仅接受预设设备名单并需要请求标识',async()=>{let calls=0;const api=createEnvironmentPlanApi({enabled:()=>true,jobs:{create:n=>{calls++;return {names:n}}}}),a=res();await api(req({names:['pc1'],command:'anything'}),a);assert.equal(a.status,400);const b=res();await api(req({names:['pc1']},'wrong'),b);assert.equal(b.status,403);const c=res();await api(req({names:['pc1']}),c);assert.equal(c.status,202);assert.equal(calls,1)});

@@ -1,0 +1,11 @@
+import {randomUUID} from 'node:crypto';
+function text(value,max){if(typeof value!=='string'||!value.trim()||value.length>max||/[\x00-\x1f]/.test(value))throw Error('职业标准文字无效');return value.trim()}
+const key=s=>s.normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim();
+export class StandardStore{
+ constructor({storage={load:()=>[],save:()=>{}}}={}){this.storage=storage;this.items=storage.load();if(!Array.isArray(this.items))throw Error('职业标准无法读取')}
+ create({occupation,level,modules}){occupation=text(occupation,100);if(![3,4,5].includes(level)||!Array.isArray(modules)||modules.length<1||modules.length>30)throw Error('等级或模块无效');if(this.items.some(x=>x.level===level&&key(x.occupation)===key(occupation)))throw Error('该职业等级已有标准草稿');
+  modules=modules.map(m=>{const name=text(m?.name,100),weight=m.weight;if(/[|]/.test(name))throw Error('模块名称不能包含竖线');if(typeof weight!=='number'||!Number.isInteger(weight)||weight<1||weight>100||!Array.isArray(m.knowledge)||!m.knowledge.length||m.knowledge.length>100)throw Error('模块权重或知识点无效');const knowledge=m.knowledge.map(x=>{const value=text(x,200);if(/[|、,，]/.test(value))throw Error('单个知识点不能包含分隔符');return value});if(new Set(knowledge.map(key)).size!==knowledge.length)throw Error('知识点重复');return {name,weight,knowledge}});if(new Set(modules.map(x=>key(x.name))).size!==modules.length)throw Error('模块重复');if(modules.reduce((sum,m)=>sum+m.weight,0)!==100)throw Error('模块权重合计须为 100');if(this.items.length>=1000)throw Error('标准草稿已满');const item={id:randomUUID(),occupation,level,modules,status:'draft',createdAt:new Date().toISOString()};this.items.push(item);try{this.storage.save(this.items)}catch(e){this.items.pop();throw e}return structuredClone(item)
+ }
+ update(id,input){const index=this.items.findIndex(x=>x.id===id);if(index<0)throw Error('标准不存在');const existing=this.items[index],shadow=new StandardStore({storage:{load:()=>structuredClone(this.items.filter(x=>x.id!==id)),save:()=>{}}}),validated=shadow.create(input),item={...validated,id:existing.id,createdAt:existing.createdAt,updatedAt:new Date().toISOString()};const next=this.items.map((x,i)=>i===index?item:x);this.storage.save(next);this.items=next;return structuredClone(item)}
+ list(){return structuredClone(this.items)}
+}

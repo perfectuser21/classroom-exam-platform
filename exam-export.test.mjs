@@ -1,0 +1,2 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {examCsv} from './exam-export.mjs';
+test('成绩表保留未参加为空，防止公式注入并转义引号和换行',()=>{const csv=examCsv({name:'测试',students:[{id:1,name:'=1+1',state:'finished',score:90,maxScore:100},{id:2,name:'张,"三"',state:'not_started',score:null,maxScore:null}]});assert.ok(csv.startsWith('\ufeff'));assert.match(csv,/'=1\+1/);assert.match(csv,/"张,""三"""/);assert.match(csv,/未开始,,/)});

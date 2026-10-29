@@ -1,0 +1,3 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {normalizePreflight} from './preflight-result.mjs';
+test('在线但命令无响应必须返回错误，而不是显示成功',()=>{const r=normalizePreflight({name:'pc',online:true,raw:''});assert.equal(r.name,'pc');assert.equal(r.error,'环境检查未返回完整结果');assert.equal('raw' in r,false)});
+test('离线状态和有效结果得到保留，原始输出不暴露',()=>{assert.deepEqual(normalizePreflight({name:'pc',error:'设备离线'}),{name:'pc',error:'设备离线'});const r=normalizePreflight({name:'pc',online:true,raw:'{"disks":[],"software":{"conda":true,"jupyter":false}}'});assert.equal(r.software.conda,true);assert.equal('raw' in r,false)});

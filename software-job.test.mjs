@@ -1,0 +1,5 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {parseSoftwareResult} from './software-job.mjs';
+test('只接受安装脚本标记的完整结果',()=>{const a=parseSoftwareResult('noise\nCLASSROOM_RESULT:{"status":"already_ready","version":"4.13.0"}\nC:\\>');assert.deepEqual(a,{status:'already_ready',version:'4.13.0'});assert.throws(()=>parseSoftwareResult(''));assert.throws(()=>parseSoftwareResult('CLASSROOM_RESULT:{"status":"success"}'));assert.throws(()=>parseSoftwareResult('CLASSROOM_RESULT:{"status":"installed","version":""}'));});
+test('失败结果不丢失具体阶段',()=>{assert.deepEqual(parseSoftwareResult('CLASSROOM_RESULT:{"status":"failed","stage":"import"}'),{status:'failed',stage:'import'});});
+test('不能从多条互相冲突的安装回执中挑选成功结果',()=>{assert.throws(()=>parseSoftwareResult('CLASSROOM_RESULT:{"status":"installed","version":"4.13.0"}\nCLASSROOM_RESULT:{"status":"failed","stage":"import"}'))});
+test('版本不匹配和依赖缺失是明确的检查失败',()=>{for(const stage of ['version','dependencies'])assert.deepEqual(parseSoftwareResult('CLASSROOM_RESULT:'+JSON.stringify({status:'failed',stage})),{status:'failed',stage})});

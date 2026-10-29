@@ -1,0 +1,5 @@
+import {Readable} from 'node:stream';import {moodleExamKey} from './exam-paths.mjs';import {taskbookText} from './practical-taskbook.mjs';
+export class PracticalTaskbooks{
+ constructor({store,getTask}){Object.assign(this,{store,getTask});this.locks=new Map()}
+ async create(taskId,exam){if(typeof taskId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(taskId)||!/^[1-9]\d{0,9}$/.test(String(exam)))throw Error('任务或考试无效');const examKey=moodleExamKey(exam),key=taskId+':'+examKey;if(this.locks.has(key))return this.locks.get(key);const run=(async()=>{const task=this.getTask(taskId);if(!task||task.id!==taskId)throw Error('任务不存在');const existing=(await this.store.list(examKey)).find(x=>x.taskbookId===taskId);if(existing){await this.store.read(existing.id);return existing}const data=Buffer.from('\ufeff'+taskbookText(task),'utf8');return this.store.save({exam:examKey,name:'task-'+taskId+'.txt',taskbookId:taskId,stream:Readable.from([data])})})();this.locks.set(key,run);try{return await run}finally{this.locks.delete(key)}}
+}

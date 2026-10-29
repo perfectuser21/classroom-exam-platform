@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {ownsEssayQuiz} from './essay-ownership.mjs';
+test('只允许工作台有成功创建回执且唯一的考试',()=>{const jobs=[{papers:[{status:'created',quizId:10},{status:'unknown',quizId:11}]}];assert.equal(ownsEssayQuiz(jobs,10),true);assert.equal(ownsEssayQuiz(jobs,11),false);assert.equal(ownsEssayQuiz(jobs,12),false);assert.equal(ownsEssayQuiz([...jobs,...jobs],10),false)});

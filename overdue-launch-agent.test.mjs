@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {overdueLaunchAgent} from './overdue-launch-agent.mjs';
+test('定时任务只运行 Moodle 的逾期答卷处理，并对路径进行 XML 转义',()=>{const xml=overdueLaunchAgent('/Users/test & name');assert.match(xml,/classroom-overdue/);assert.match(xml,/--execute=\\mod_quiz\\task\\update_overdue_attempts/);assert.match(xml,/StartInterval<\/key><integer>60/);assert.match(xml,/test &amp; name/);assert.doesNotMatch(xml,/admin\/cli\/cron.php/);assert.throws(()=>overdueLaunchAgent('relative'))});

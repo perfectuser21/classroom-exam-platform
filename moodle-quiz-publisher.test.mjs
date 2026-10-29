@@ -1,0 +1,4 @@
+import {test} from 'node:test';import {strict as assert} from 'node:assert';import {createMoodleQuizPublisher} from './moodle-quiz-publisher.mjs';
+const draft={id:'11111111-1111-4111-8111-111111111111',name:'试点',duration:60},paper={version:'A',questions:[{id:'22222222-2222-4222-8222-222222222222',moodleId:7,points:1}]};
+test('只接受正确试卷身份且保持隐藏的 Moodle 回执',async()=>{const run=createMoodleQuizPublisher({invoke:async p=>JSON.stringify({ok:true,paperId:p.paperId,version:p.version,quizId:4,courseModuleId:5,hidden:true})});assert.deepEqual(await run(draft,paper),{quizId:4,courseModuleId:5});});
+test('开放、无效编号或身份不匹配不算成功',async()=>{for(const r of [{ok:true,paperId:draft.id,version:'A',quizId:4,courseModuleId:5,hidden:false},{ok:true,paperId:'x',version:'A',quizId:4,courseModuleId:5,hidden:true}])await assert.rejects(()=>createMoodleQuizPublisher({invoke:async()=>JSON.stringify(r)})(draft,paper))});

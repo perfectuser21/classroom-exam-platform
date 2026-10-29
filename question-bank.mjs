@@ -1,0 +1,25 @@
+import {randomUUID} from 'node:crypto';
+const normalize=s=>s.normalize('NFKC').replace(/\s+/g,' ').trim().toLowerCase();
+function text(value,max){if(typeof value!=='string'||!value.trim()||value.length>max||/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(value))throw Error('题目文字无效');return value.trim()}
+export class QuestionBank {
+ constructor({storage={load:()=>[],save:()=>{}}}={}){this.storage=storage;this.items=storage.load();if(!Array.isArray(this.items))throw Error('题库无法读取')}
+ create({level,type,stem,options,answers,points,reference,gradingPolicy}){
+  if(![3,4,5].includes(level)||!['single','multiple','truefalse','fill','essay'].includes(type))throw Error('题目等级或题型无效');
+  if(gradingPolicy!==undefined&&(type!=='multiple'||gradingPolicy!=='partial_no_wrong'))throw Error('评分规则无效');
+  stem=text(stem,5000);if(this.items.some(q=>q.level===level&&normalize(q.stem)===normalize(stem)))throw Error('题目重复');
+  if(['fill','essay'].includes(type)){reference=text(reference,5000);options=[];answers=[]}else{
+  if(!Array.isArray(options)||options.length<2||options.length>10)throw Error('选项无效');options=options.map(x=>text(x,2000));if(new Set(options.map(normalize)).size!==options.length)throw Error('选项重复');
+  if(type==='truefalse'&&(options.length!==2||options[0]!=='正确'||options[1]!=='错误'))throw Error('判断题选项无效');
+  if(!Array.isArray(answers)||answers.length<1||new Set(answers).size!==answers.length||answers.some(i=>!Number.isInteger(i)||i<0||i>=options.length)||(type!=='multiple'&&answers.length!==1))throw Error('答案无效');
+  }
+  if(typeof points!=='number'||!Number.isFinite(points)||points<=0||points>100)throw Error('分值无效');if(this.items.length>=10000)throw Error('题库已满');
+  const item={id:randomUUID(),level,type,stem,options,answers:[...answers].sort((a,b)=>a-b),points,...(['fill','essay'].includes(type)?{reference}:{}),...(type==='multiple'&&gradingPolicy?{gradingPolicy}:{}),status:'draft',createdAt:new Date().toISOString()};this.items.push(item);try{this.storage.save(this.items)}catch(e){this.items.pop();throw e}return structuredClone(item);
+ }
+ setClassification(id,classification,standards){const index=this.items.findIndex(q=>q.id===id);if(index<0)throw Error('题目不存在');if(!Array.isArray(standards))throw Error('职业标准不可用');let selected;if(classification!==null){if(!classification||typeof classification!=='object'||Array.isArray(classification)||Object.keys(classification).sort().join(',')!=='knowledge,module,standardId')throw Error('题目分类无效');const {standardId,module,knowledge}=classification;if(typeof standardId!=='string'||typeof module!=='string'||typeof knowledge!=='string')throw Error('题目分类无效');const standard=standards.find(s=>s.id===standardId&&s.level===this.items[index].level),part=standard?.modules?.find(m=>m.name===module);if(!part||!part.knowledge.includes(knowledge))throw Error('分类须匹配同等级职业标准中的模块和知识点');selected={standardId,module,knowledge}}const item={...this.items[index]};if(selected)item.classification=selected;else delete item.classification;const next=this.items.map((q,i)=>i===index?item:q);this.storage.save(next);this.items=next;return structuredClone(item)}
+ setImage(id,image){const index=this.items.findIndex(q=>q.id===id);if(index<0)throw Error('题目不存在');if(this.items[index].image)throw Error('题目已有图片');if(!image||typeof image.id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(image.id)||!/^[a-f0-9]{64}$/.test(image.sha256))throw Error('图片记录无效');const item={...this.items[index],image:{id:image.id,sha256:image.sha256}},next=this.items.map((q,i)=>i===index?item:q);this.storage.save(next);this.items=next;return structuredClone(item)}
+ setMultiplePolicy(id,policy){if(policy!=='partial_no_wrong')throw Error('评分规则无效');const index=this.items.findIndex(q=>q.id===id);if(index<0||this.items[index].type!=='multiple')throw Error('多选草稿不存在');const item={...this.items[index],gradingPolicy:policy},next=this.items.map((q,i)=>i===index?item:q);this.storage.save(next);this.items=next;return structuredClone(item)}
+ createBatch(items){if(!Array.isArray(items)||items.length<1||items.length>1000)throw Error('导入题量无效');const shadow=new QuestionBank({storage:{load:()=>structuredClone(this.items),save:()=>{}}});const created=items.map(item=>shadow.create(item));this.storage.save(shadow.items);this.items=shadow.items;return created}
+ prepareBatch(items){if(!Array.isArray(items)||items.length<1||items.length>1000)throw Error('导入题量无效');const expected=JSON.stringify(this.items),shadow=new QuestionBank({storage:{load:()=>structuredClone(this.items),save:()=>{}}}),created=shadow.createBatch(items);return {expected,shadow,created}}
+ commitPrepared(prepared){if(!prepared||typeof prepared.expected!=='string'||!(prepared.shadow instanceof QuestionBank)||JSON.stringify(this.items)!==prepared.expected)throw Error('题库已变化，请重新预检');const items=prepared.shadow.list();this.storage.save(items);this.items=items;return prepared.created.map(q=>structuredClone(items.find(x=>x.id===q.id)))}
+ list({level}={}){if(level!==undefined&&![3,4,5].includes(level))throw Error('等级无效');return this.items.filter(q=>level===undefined||q.level===level).map(q=>structuredClone(q))}
+}
