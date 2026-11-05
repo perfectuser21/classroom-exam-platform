@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import {strict as assert} from 'node:assert';
+import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+const staff=readFileSync(new URL('./staff.html',import.meta.url),'utf8');
+const candidate=readFileSync(new URL('./candidate.html',import.meta.url),'utf8');
+const gateway=readFileSync(new URL('./gateway.mjs',import.meta.url),'utf8');
+const frontend=readFileSync(new URL('./frontend.html',import.meta.url),'utf8');
+test('考务页保留账号密码登录，并提供考评员三项登录',()=>{assert.match(staff,/id="username"/);assert.match(staff,/id="password"/);assert.match(staff,/id="examiner-name"/);assert.match(staff,/id="examiner-id"/);assert.match(staff,/id="examiner-phone"/);assert.match(staff,/X-Classroom-Request':'staff-login'/);const script=staff.match(/<script>([\s\S]*?)<\/script>/)[1];const result=spawnSync(process.execPath,['--check'],{input:script,encoding:'utf8'});assert.equal(result.status,0,result.stderr)});
+test('考生页保留原登录，并提供学员手机号登录和自行设密',()=>{assert.match(candidate,/id="login-form"/);assert.match(candidate,/id="student-phone"/);assert.match(candidate,/id="student-pass"/);assert.match(candidate,/id="student-new-pass"/);assert.match(candidate,/phone:document\.querySelector\('#student-phone'\)\.value/);assert.match(candidate,/\/api\/staff\/password/);assert.match(gateway,/\/api\/staff\/password/);assert.match(gateway,/scope:'all'/);assert.match(frontend,/class_teacher:'班主任',instructor:'讲师',examiner:'考评员',student:'学员'/)});
