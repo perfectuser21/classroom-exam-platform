@@ -6,7 +6,7 @@ require_once $CFG->dirroot . '/course/lib.php';
 $input = json_decode(stream_get_contents(STDIN), true, 32, JSON_THROW_ON_ERROR);
 if (empty($CFG->enableavailability) || !is_array($input) || !preg_match('/^[a-f0-9-]{36}$/', $input['paperId'] ?? '') || !is_array($input['groups'] ?? null) || count($input['groups']) < 1 || count($input['groups']) > 2) { throw new RuntimeException('Invalid pilot assignment'); }
 $course = get_course(2); $eligibleids = classroom_enrolled_students($course->id);
-if (count($eligibleids) < 5 || count($eligibleids) > 50) { throw new RuntimeException('Course student count unsupported'); }
+if (count($eligibleids) < 1 || count($eligibleids) > 50) { throw new RuntimeException('Course student count unsupported'); }
 $assigned = []; $versions = []; $records = [];
 foreach ($input['groups'] as $group) {
     if (!is_array($group) || !in_array($group['version'] ?? '', ['A', 'B'], true) || isset($versions[$group['version']]) || !is_int($group['quizId'] ?? null) || !is_int($group['courseModuleId'] ?? null) || !is_array($group['studentIds'] ?? null) || count($group['studentIds']) < 1) { throw new RuntimeException('Invalid group'); }
@@ -19,7 +19,7 @@ foreach ($input['groups'] as $group) {
     $records[] = ['key' => $key, 'cm' => $cm, 'version' => $group['version'], 'studentIds' => $group['studentIds']];
 }
 $assignedids = array_map('intval', array_keys($assigned)); sort($assignedids);
-if (!classroom_participants($eligibleids, $assignedids)) { throw new RuntimeException('Exactly five enrolled students must be assigned'); }
+if (!classroom_participants($eligibleids, $assignedids)) { throw new RuntimeException('Invalid assigned students'); }
 $transaction = $DB->start_delegated_transaction(); $result = [];
 foreach ($records as $record) {
     $groupid = groups_create_group((object)['courseid' => $course->id, 'name' => '试点分组 ' . $record['key'], 'idnumber' => $record['key']]);

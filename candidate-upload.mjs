@@ -3,7 +3,7 @@ import {createCandidateBundle} from './candidate-bundle.mjs';
 import {createHash} from 'node:crypto';import {planAnswerCollection} from './answer-manifest.mjs';
 const extensions=new Set(['csv','json','png','py','ipynb','zip']);
 export class CandidateUploads{
- constructor({authorize,list,read,save,validateTask=async()=>null,markStarted=()=>{},clock=Date.now,maxFileBytes=50*1024*1024,maxBundleBytes=MAX_BUNDLE_BYTES,maxTotalBytes=500*1024*1024,maxVersions=20,maxConcurrent=5}){Object.assign(this,{authorize,list,read,save,validateTask,markStarted,clock,maxFileBytes,maxBundleBytes,maxTotalBytes,maxVersions,maxConcurrent});this.active=0;this.locks=new Set()}
+ constructor({authorize,list,read,save,validateTask=async()=>null,markStarted=()=>{},clock=Date.now,maxFileBytes=50*1024*1024,maxBundleBytes=MAX_BUNDLE_BYTES,maxTotalBytes=500*1024*1024,maxVersions=20,maxConcurrent=10}){Object.assign(this,{authorize,list,read,save,validateTask,markStarted,clock,maxFileBytes,maxBundleBytes,maxTotalBytes,maxVersions,maxConcurrent});this.active=0;this.locks=new Set()}
  async bundle(input,token){return createCandidateBundle(this,input,token)}
  async history(quizId,token){
   if(!Number.isSafeInteger(quizId)||quizId<1||typeof token!=='string'||!token)throw Error('考试不可用');

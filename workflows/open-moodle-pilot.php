@@ -6,7 +6,7 @@ require_once $CFG->dirroot . '/course/lib.php';
 $input = json_decode(stream_get_contents(STDIN), true, 32, JSON_THROW_ON_ERROR);
 if (empty($CFG->enableavailability) || !is_array($input) || !preg_match('/^[a-f0-9-]{36}$/', $input['paperId'] ?? '') || !is_array($input['groups'] ?? null) || count($input['groups']) < 1 || count($input['groups']) > 2) { throw new RuntimeException('Invalid release'); }
 $course = get_course(2); $eligible = classroom_enrolled_students($course->id);
-if (count($eligible) < 5 || count($eligible) > 50) { throw new RuntimeException('Course student count unsupported'); }
+if (count($eligible) < 1 || count($eligible) > 50) { throw new RuntimeException('Course student count unsupported'); }
 $assigned = []; $versions = []; $modules = [];
 foreach ($input['groups'] as $group) {
     if (!is_array($group) || !in_array($group['version'] ?? '', ['A', 'B'], true) || isset($versions[$group['version']]) || !is_int($group['quizId'] ?? null) || !is_int($group['courseModuleId'] ?? null) || !is_int($group['groupId'] ?? null) || !is_array($group['studentIds'] ?? null) || count($group['studentIds']) < 1) { throw new RuntimeException('Invalid version'); }
@@ -44,7 +44,7 @@ foreach ($input['groups'] as $group) {
     foreach ($eligible as $id) { $details = ''; if ($info->is_available($details, false, $id) !== in_array($id, $expected, true)) { throw new RuntimeException('Availability changed'); } }
     $modules[] = ['version' => $group['version'], 'id' => (int)$cm->id, 'quizId' => (int)$cm->instance];
 }
-$ids = array_map('intval', array_keys($assigned)); sort($ids); if (!classroom_participants($eligible, $ids)) { throw new RuntimeException('Exactly five enrolled students must be assigned'); }
+$ids = array_map('intval', array_keys($assigned)); sort($ids); if (!classroom_participants($eligible, $ids)) { throw new RuntimeException('Invalid assigned students'); }
 $transaction = $DB->start_delegated_transaction();
 foreach ($modules as $module) { set_coursemodule_visible($module['id'], 1, 1, false); $check = $DB->get_record('course_modules', ['id' => $module['id']], 'id,visible,availability', MUST_EXIST); if (!$check->visible || empty($check->availability)) { throw new RuntimeException('Release not confirmed'); } }
 $transaction->allow_commit(); rebuild_course_cache($course->id, true);
