@@ -2,7 +2,7 @@ import {filename} from './artifact-store.mjs';
 export function materialDisposition(name){filename(name);return "attachment; filename*=UTF-8''"+encodeURIComponent(name).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())}
 import {CandidateSessions,validateQuizId,allowedAnswers} from './candidate-session.mjs';
 const allowed=new Set(['login','logout','courses','quizzes','start','data','save','submit','attempt-status','tasks','media','upload','upload-config','upload-history','upload-bundle','materials','material','materials-config','profile','seat']);
-export function createCandidateHandler({call,loadMedia=async()=>{throw Error('图片不可用')},uploadEnabled=()=>false,uploader=null,materialsEnabled=()=>false,materials=null,taskList=async()=>{throw Error('任务不可用')},seatLookup=async()=>{throw Error('工位不可用')},sessions=new CandidateSessions()}){
+export function createCandidateHandler({call,loadMedia=async()=>{throw Error('图片不可用')},uploadEnabled=()=>false,uploader=null,materialsEnabled=()=>false,materials=null,taskList=async()=>{throw Error('任务不可用')},seatLookup=async()=>{throw Error('工位不可用')},sessions=new CandidateSessions(),candidateAllowed=()=>true}){
  const failures=new Map();
  return async function(req,res){
   let refreshCookie=null;function send(status,data,headers={}){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',...(refreshCookie?{'Set-Cookie':refreshCookie}:{}),...headers});res.end(JSON.stringify(data))}
@@ -26,8 +26,8 @@ export function createCandidateHandler({call,loadMedia=async()=>{throw Error('�
    if(action==='login'){
     const ip=req.socket?.remoteAddress||'unknown',now=Date.now(),f=failures.get(ip);if(f&&f.count>=10&&now-f.since<600000)return send(429,{error:'登录次数过多，请稍后重试'});
     if(typeof body.username!=='string'||body.username.length>100||typeof body.password!=='string'||body.password.length>200)return send(400,{error:'账号或密码格式错误'});
-    const result=await call('login',{username:body.username,password:body.password});if(!result?.token){const x=f&&now-f.since<600000?f:{count:0,since:now};x.count++;failures.set(ip,x);return send(401,{error:'账号或密码不正确'})}
-    failures.delete(ip);const sid=sessions.create(result.token);return send(200,{ok:true},{'Set-Cookie':`classroom_candidate=${sid}; Path=/api/candidate/; HttpOnly; Secure; SameSite=Strict; Max-Age=18000`});
+    if(!candidateAllowed(body.username))return send(401,{error:'账号或密码不正确'});const result=await call('login',{username:body.username,password:body.password});if(!result?.token){const x=f&&now-f.since<600000?f:{count:0,since:now};x.count++;failures.set(ip,x);return send(401,{error:'账号或密码不正确'})}
+    failures.delete(ip);const sid=sessions.create(result.token,body.username);return send(200,{ok:true},{'Set-Cookie':`classroom_candidate=${sid}; Path=/api/candidate/; HttpOnly; Secure; SameSite=Strict; Max-Age=18000`});
    }
    if(!token)return send(401,{error:'请登录后继续'});
    refreshCookie=`classroom_candidate=${id}; Path=/api/candidate/; HttpOnly; Secure; SameSite=Strict; Max-Age=18000`;
