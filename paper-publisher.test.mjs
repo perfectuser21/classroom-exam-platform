@@ -3,3 +3,8 @@ const draft={id:'paper-1',name:'试点',duration:60,status:'draft',papers:[{vers
 test('逐卷持久化创建回执，AB 卷均隐藏',async()=>{let saved=[];const jobs=new PaperPublisher({getPaper:()=>draft,storage:{load:()=>saved,save:x=>saved=structuredClone(x)},execute:async(d,p)=>{assert.equal(saved[0].papers.find(x=>x.version===p.version).status,'running');return {quizId:p.version==='A'?1:2,courseModuleId:p.version==='A'?3:4}}});const job=jobs.create('paper-1');await jobs.wait(job.id);const result=jobs.get(job.id);assert.equal(result.status,'completed');assert.deepEqual(result.papers.map(p=>p.status),['created','created']);assert.throws(()=>jobs.create('paper-1'))});
 test('部分创建或服务中断必须标为待核实，禁止重复创建',async()=>{let n=0,saved=[];const storage={load:()=>saved,save:x=>saved=structuredClone(x)},jobs=new PaperPublisher({getPaper:()=>draft,storage,execute:async()=>{if(n++)throw Error('timeout');return {quizId:1,courseModuleId:2}}});const job=jobs.create('paper-1');await jobs.wait(job.id);assert.equal(jobs.get(job.id).status,'needs_review');assert.deepEqual(jobs.get(job.id).papers.map(p=>p.status),['created','unknown']);const restarted=new PaperPublisher({getPaper:()=>draft,storage,execute:async()=>({})});assert.throws(()=>restarted.create('paper-1'))});
 test('持久化失败不会创建 Moodle 试卷',()=>{let calls=0;const jobs=new PaperPublisher({getPaper:()=>draft,storage:{load:()=>[],save:()=>{throw Error('disk')}},execute:async()=>calls++});assert.throws(()=>jobs.create('paper-1'));assert.equal(calls,0)});
+
+test('a paper cannot be published while a question has no Moodle ID',()=>{
+ const pub=new PaperPublisher({getPaper:()=>({id:'p',status:'draft',papers:[{version:'A',questions:[{id:'q'}]}]}),execute:async()=>({quizId:1,courseModuleId:2})});
+ assert.throws(()=>pub.create('p'),/题目.*Moodle/);
+});

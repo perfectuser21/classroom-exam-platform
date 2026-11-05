@@ -32,6 +32,7 @@ export function routeAction(method,path){
  if(method==='POST'&&path==='/api/questions/similar')return 'questions.read';
  if(method==='GET'&&path==='/api/questions')return 'questions.read';
  if(method==='POST'&&path==='/api/questions')return 'questions.write';
+ if(['PUT','DELETE'].includes(method)&&/^\/api\/questions\/[a-f0-9-]{36}$/.test(path))return 'questions.write';
  if((['GET','POST'].includes(method)&&path==='/api/practical-arbitrations')||(method==='POST'&&path==='/api/practical-arbitrations/finalize'))return 'results.arbitrate';
  if(method==='GET'&&path==='/api/practical-reviews')return 'results.read';
  if(method==='POST'&&path==='/api/practical-reviews')return 'results.write';

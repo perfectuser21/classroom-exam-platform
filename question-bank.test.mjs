@@ -10,3 +10,15 @@ test('多选题可显式保存漏选比例且错选零分规则，拒绝未知�
 test('已有多选草稿可明确计分规则，保存失败不修改',()=>{let fail=false;const bank=new QuestionBank({storage:{load:()=>[],save:()=>{if(fail)throw Error('disk')}}});const q=bank.create({...sample,stem:'历史多选',type:'multiple',answers:[0,1]});const updated=bank.setMultiplePolicy(q.id,'partial_no_wrong');assert.equal(updated.gradingPolicy,'partial_no_wrong');fail=true;assert.throws(()=>bank.setMultiplePolicy(q.id,'partial_no_wrong'));assert.equal(bank.list()[0].gradingPolicy,'partial_no_wrong');assert.throws(()=>bank.setMultiplePolicy('missing','partial_no_wrong'))});
 test('题目可关联经过校验的图片，不能覆盖原图片或添加无效标识',()=>{const bank=new QuestionBank(),q=bank.create(sample),image={id:'11111111-1111-4111-8111-111111111111',sha256:'a'.repeat(64)};assert.deepEqual(bank.setImage(q.id,image).image,image);assert.throws(()=>bank.setImage(q.id,image));const q2=bank.create({...sample,stem:'另一题'});assert.throws(()=>bank.setImage(q2.id,{id:'../x',sha256:'x'}))});
 test('题目分类必须匹配职业标准、等级、模块和知识点，保存失败保留原值',()=>{const standard={id:'standard-1',level:5,occupation:'数据标注员',modules:[{name:'数据基础',weight:100,knowledge:['数据清洗']}]};let fail=false;const b=new QuestionBank({storage:{load:()=>[],save:()=>{if(fail)throw Error('disk')}}});const q=b.create({level:5,type:'single',stem:'分类题',options:['甲','乙'],answers:[0],points:1});const c={standardId:'standard-1',module:'数据基础',knowledge:'数据清洗'};assert.deepEqual(b.setClassification(q.id,c,[standard]).classification,c);for(const wrong of [{...c,standardId:'missing'},{...c,module:'无'},{...c,knowledge:'无'}])assert.throws(()=>b.setClassification(q.id,wrong,[standard]));assert.throws(()=>b.setClassification(q.id,c,[{...standard,level:4}]));fail=true;assert.throws(()=>b.setClassification(q.id,null,[standard]));assert.deepEqual(b.list()[0].classification,c);fail=false;assert.equal(b.setClassification(q.id,null,[standard]).classification,undefined)});
+
+test('draft questions can be edited with stable IDs, filtered by standard and removed',()=>{
+ const bank=new QuestionBank();
+ const q=bank.create({level:5,type:'single',stem:'原题',options:['甲','乙'],answers:[0],points:1});
+ const standards=[{id:'std-1',level:5,modules:[{name:'基础',knowledge:['安全']}]}];
+ bank.setClassification(q.id,{standardId:'std-1',module:'基础',knowledge:'安全'},standards);
+ assert.equal(bank.list({standardId:'std-1'})[0].id,q.id);
+ const edited=bank.update(q.id,{level:5,type:'single',stem:'修改后',options:['甲','乙'],answers:[1],points:2});
+ assert.equal(edited.id,q.id);assert.equal(edited.classification.standardId,'std-1');
+ assert.equal(bank.list({standardId:'other'}).length,0);
+ bank.remove(q.id);assert.equal(bank.list().length,0);
+});

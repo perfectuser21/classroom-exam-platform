@@ -4,6 +4,7 @@ export class PaperPublisher {
  persist(){this.storage.save([...this.jobs.values()])}
  create(paperId){
   const draft=this.getPaper(paperId);if(!draft||draft.id!==paperId||draft.status!=='draft'||!Array.isArray(draft.papers)||draft.papers.length<1||draft.papers.length>2||draft.papers.some(p=>!['A','B'].includes(p.version)||!Array.isArray(p.questions)||!p.questions.length))throw Error('试卷草稿无效');
+  if(draft.papers.some(p=>p.questions.some(q=>!Number.isSafeInteger(q.moodleId)||q.moodleId<1)))throw Error('题目尚未全部发布到 Moodle');
   if([...this.jobs.values()].some(j=>j.paperId===paperId))throw Error('试卷已创建或结果待核实');if(this.jobs.size>=1000)throw Error('试卷记录已满');
   const id=randomUUID(),job={id,paperId,status:'running',createdAt:new Date().toISOString(),papers:draft.papers.map(p=>({version:p.version,status:'queued'}))};this.jobs.set(id,job);try{this.persist()}catch(e){this.jobs.delete(id);throw e}const pending=this.run(job,draft);this.running.set(id,pending);return this.get(id);
  }
