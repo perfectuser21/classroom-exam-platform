@@ -8,7 +8,7 @@ run=$(cd "$run" && pwd)
 case "${1:-}" in
  launch)
   if curl -fsS "$base/candidate" >/dev/null 2>&1; then echo 'FAIL: port 18199 already occupied'; exit 1; fi
-  rm -f "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/result.txt" "$run/staff-login.json" "$run/candidate-login.json" "$run/org-drive.txt" "$run/bank-drive.txt"
+  rm -f "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/result.txt" "$run/staff-login.json" "$run/candidate-login.json" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt"
   state=$(mktemp -d "${TMPDIR:-/tmp}/classroom-verify.XXXXXXXX") || exit 1
   echo "$state" > "$run/state-path"
   CLASSROOM_VERIFY_STATE="$state" node --input-type=module <<'NODE'
@@ -36,14 +36,15 @@ NODE
   if [ "$code" = 200 ] && node -e "const x=require(process.argv[1]);process.exit(x.role==='class_teacher'?0:1)" "$run/staff-login.json"; then echo 'PASS staff login: class_teacher'; else echo "FAIL staff login HTTP ${code:-unreachable}"; fi | tee "$run/staff-drive.txt"
   node .cursor/skills/verify-classroom/scripts/org-drive.mjs "$run/org-drive.txt"
   node .cursor/skills/verify-classroom/scripts/bank-drive.mjs "$run/bank-drive.txt"
+  node .cursor/skills/verify-classroom/scripts/class-drive.mjs "$run/class-drive.txt"
   if [ -z "${CLASSROOM_VERIFY_CANDIDATE_USER:-}" ] || [ -z "${CLASSROOM_VERIFY_CANDIDATE_PASSWORD:-}" ]; then echo 'FAIL candidate login: dedicated Moodle test credentials not supplied' | tee "$run/candidate-drive.txt"; exit 1; fi
   payload=$(node -e "process.stdout.write(JSON.stringify({username:process.env.CLASSROOM_VERIFY_CANDIDATE_USER,password:process.env.CLASSROOM_VERIFY_CANDIDATE_PASSWORD}))")
   code=$(curl -sS -o "$run/candidate-login.json" -w '%{http_code}' -H 'Content-Type: application/json' -H 'X-Classroom-Request: candidate' --data "$payload" "$base/api/candidate/login" 2>/dev/null || true)
   if [ "$code" = 200 ] && node -e "const x=require(process.argv[1]);process.exit(x.ok===true?0:1)" "$run/candidate-login.json"; then echo 'PASS candidate Moodle login'; else echo "FAIL candidate login HTTP ${code:-unreachable}"; fi | tee "$run/candidate-drive.txt"
-  if grep -q '^FAIL' "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt"; then exit 1; fi ;;
+  if grep -q '^FAIL' "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt"; then exit 1; fi ;;
  evidence)
-  for f in doctor.txt staff-drive.txt candidate-drive.txt org-drive.txt bank-drive.txt; do if [ ! -s "$run/$f" ]; then echo "FAIL missing $run/$f"; exit 1; fi; done
-  cat "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" | tee "$run/result.txt"
+  for f in doctor.txt staff-drive.txt candidate-drive.txt org-drive.txt bank-drive.txt class-drive.txt; do if [ ! -s "$run/$f" ]; then echo "FAIL missing $run/$f"; exit 1; fi; done
+  cat "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt" | tee "$run/result.txt"
   echo "Evidence: $run"
   if grep -q '^FAIL' "$run/result.txt"; then exit 1; fi ;;
  cleanup)
