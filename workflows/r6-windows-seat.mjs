@@ -33,6 +33,9 @@ async function until(fn,timeout=120000){const start=Date.now();while(Date.now()-
 async function control(args){return node(ctrl,args,{MESHCTRL_URL:'wss://127.0.0.1:18443',MESHCTRL_LOGINUSER:credential.username,MESHCTRL_LOGINPASS:credential.password})}
 function localGet(path){return new Promise((resolve,reject)=>{https.get('https://127.0.0.1:18443'+path,{rejectUnauthorized:false},r=>{if(r.statusCode!==200){r.resume();reject(Error('Local Mesh HTTP '+r.statusCode));return}resolve(r)}).on('error',reject)})}
 try{
+ phase='Launch clean hosted image';console.log(phase);
+ const prepared=await ps(readFileSync(resolve('workflows/r6-prepare-windows.ps1'),'utf8'));
+ writeFileSync(join(run,'seat-env-image.txt'),prepared);console.log(prepared);
  console.log('Launch: isolated Windows storage, Mesh and gateway');
  // New real NTFS volumes when the hosted image has no D:/E:. Never reformat
  // an existing drive. The runner VM and these VHDs are destroyed by Actions.
