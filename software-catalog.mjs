@@ -1,5 +1,5 @@
 const catalog=[
- {id:'anaconda',name:'Anaconda',target:'学员电脑 D 盘',requirements:'已准备 2025.12-2 官方安装包作为 Windows 10 试点候选；需实机验证并确认许可',steps:['检查现有版本与 D 盘空间','校验并传输官方安装包','安装至约定目录','检查 Python、Jupyter 和 Spyder'],status:'testing'},
+ {id:'anaconda',name:'Anaconda',target:'学员电脑 D:\\Anaconda3',requirements:'已准备 2025.12-2 官方安装包作为 Windows 10 试点候选；需实机验证并确认许可',steps:['检查现有版本与 D 盘空间','校验并传输官方安装包','安装至约定目录','检查 Python、Jupyter 和 Spyder'],status:'testing'},
  {id:'jupyter',name:'Jupyter Notebook',target:'学员电脑本机 Anaconda 环境',requirements:'Anaconda 候选安装流程检查程序文件及 notebook 模块；版本、实际启动和 Windows 实机待验证',steps:['检查 conda 环境','安装或确认 Notebook','检查启动与工作目录'],status:'testing'},
  {id:'spyder',name:'Spyder',target:'学员电脑本机 Anaconda 环境',requirements:'预检可识别常见安装位置；Anaconda 候选安装流程检查程序文件及 spyder 模块，实际启动和 Windows 实机待验证',steps:['检查现有版本','安装或确认 Spyder','检查启动'],status:'testing'},
  {id:'labeling',name:'标注软件（名称待确认）',target:'学员电脑 D 盘',requirements:'需明确软件名称、版本和安装包',steps:['确认具体产品','检查现有版本','安装并验证启动'],status:'design'},
