@@ -23,6 +23,10 @@ const credentialFile=join(temp,'mesh-private.json');writeFileSync(credentialFile
 writeFileSync(join(home,'.credentials/1password.env'),'# Isolated runner; no shared secrets\n');
 writeFileSync(join(home,'.credentials/classroom-frontend.json'),JSON.stringify({username:'r6-basic',password:randomBytes(32).toString('hex')}));
 const env={...process.env,HOME:home,USERPROFILE:home,CLASSROOM_STATE_DIR:state,CLASSROOM_PORT:'18199',CLASSROOM_ENABLE_STAFF_AUTH:'1',CLASSROOM_ENABLE_ANACONDA:'1',CLASSROOM_MESH_BACKEND:'mac',CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE:credentialFile,CLASSROOM_VERIFY_MESH_TRACE_FILE:join(run,'mesh-transport.log')};
+// Actions invokes this harness from pwsh 7. Its module path must not shadow
+// Windows PowerShell 5 modules in the Agent's powershell.exe child processes.
+for(const key of Object.keys(env))if(key.toLowerCase()==='psmodulepath')delete env[key];
+env.PSModulePath=[join(process.env.SystemRoot,'System32','WindowsPowerShell','v1.0','Modules'),join(process.env.ProgramFiles,'WindowsPowerShell','Modules')].join(';');
 const mesh=resolve('node_modules/meshcentral/meshcentral.js'),ctrl=resolve('node_modules/meshcentral/meshctrl.js');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let phase='Launch',failed=false;

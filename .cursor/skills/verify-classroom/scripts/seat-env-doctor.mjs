@@ -24,6 +24,8 @@ export async function doctor(run){
     check(['complete','not_found'].includes(preview.status)&&preview.fileCount===0,'exam directory empty and safe before run-owned fixture creation');
     const code="$ErrorActionPreference='Stop';$d=Get-Item -LiteralPath 'E:\\' -Force;if(($d.Attributes -band [IO.FileAttributes]::ReparsePoint)-ne 0){throw 'unsafe'};if([Environment]::OSVersion.Platform -ne 'Win32NT'){throw 'windows'};Write-Output 'CLASSROOM_R6_WINDOWS:ready'";
     check(String(await client.command(seat.name,'powershell.exe -NoProfile -NonInteractive -EncodedCommand '+Buffer.from(code,'utf16le').toString('base64'))).split(/\r?\n/).includes('CLASSROOM_R6_WINDOWS:ready'),'real Windows OS and safe E: drive');
+    const hashCode="$ErrorActionPreference='Stop';$hash=(Get-FileHash -LiteralPath (Join-Path $PSHOME 'powershell.exe') -Algorithm SHA256).Hash;if($hash -notmatch '^[a-fA-F0-9]{64}$'){throw 'hash'};Write-Output 'CLASSROOM_R6_HASH:ready'";
+    check(String(await client.command(seat.name,'powershell.exe -NoProfile -NonInteractive -EncodedCommand '+Buffer.from(hashCode,'utf16le').toString('base64'))).split(/\r?\n/).includes('CLASSROOM_R6_HASH:ready'),'Windows SHA256 utility available for package verification and cleanup snapshots');
    }
   }
  }catch{check(false,'device inventory or independent Windows prerequisite probe unavailable')}
