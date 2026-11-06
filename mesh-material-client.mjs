@@ -10,11 +10,14 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 const exec=promisify(execFile);
-export function createMeshMaterialClient({invoke}) {
+export function createMeshMaterialClient({invoke,disposableSeat=null}) {
  async function deviceId(name){
+  if(disposableSeat&&name!==disposableSeat.name)throw Error('临时验证仅允许指定工位');
   const devices=JSON.parse(await invoke(['ListDevices','--json']));
   if(!Array.isArray(devices))throw Error('设备列表无效');
-  const found=devices.filter(d=>d.name===name&&d.groupname==='教学机房-5台试点');
+  const found=devices.filter(d=>d.name===name);
+  const expected=disposableSeat?.name===name?disposableSeat:null;
+  if(found.length!==1||(expected?(found[0].groupname!==expected.group||found[0]._id!==expected.id):found[0].groupname!=='教学机房-5台试点'))throw Error('设备身份不唯一');
   if(found.length!==1||typeof found[0]._id!=='string')throw Error('设备身份不唯一');
   if(!(found[0].conn&1))throw Object.assign(Error('设备离线'),{code:'DEVICE_OFFLINE'});
   return found[0]._id;

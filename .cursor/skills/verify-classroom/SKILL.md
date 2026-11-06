@@ -42,4 +42,4 @@ trap - EXIT
 exit "$verify_status"
 ```
 
-R6 acceptance is specified in [seat environment](features/seat-env.md); its Doctor and Drive currently report FAIL because the real install and cleanup path is incomplete. R5 remains outside this scope. The harness does not establish student password changes, 50-person browser load or unfinished-only examiner scoring.
+R6 acceptance is specified in [seat environment](features/seat-env.md); its Doctor and Drive exercise the guarded install and cleanup path, and report FAIL when a disposable Windows seat or installer is unavailable. `seat-env-cleanup.txt` must verify the owned Windows fixture is removed before overall PASS. R5 remains outside this scope. The harness does not establish student password changes, 50-person browser load or unfinished-only examiner scoring.

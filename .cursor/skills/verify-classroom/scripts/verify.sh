@@ -12,7 +12,7 @@ render_evidence() {
     if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
   done
   if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R0–R4 (including cleanup)' >> "$run/result.txt"; else echo 'PASS verify-classroom R0–R4 theory E2E (including cleanup)' >> "$run/result.txt"; fi
-  for f in seat-env-doctor.txt seat-env-drive.txt; do
+  for f in seat-env-doctor.txt seat-env-drive.txt seat-env-cleanup.txt; do
     if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
   done
   if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R6 seat install and cleanup' >> "$run/result.txt"; else echo 'PASS verify-classroom R6 seat install and cleanup' >> "$run/result.txt"; fi
@@ -22,8 +22,8 @@ render_evidence() {
 case "${1:-}" in
  launch)
   if curl -fsS "$base/candidate" >/dev/null 2>&1; then echo 'FAIL: port 18199 already occupied'; exit 1; fi
-  if [ -f "$run/theory-private.json" ]; then echo 'FAIL: previous R4 cleanup pending; run cleanup first'; exit 1; fi
-  for f in $evidence_files seat-env-doctor.txt seat-env-drive.txt; do rm -f "$run/$f"; done
+  if [ -f "$run/theory-private.json" ] || [ -f "$run/seat-env-private.json" ]; then echo 'FAIL: previous R4 cleanup pending; run cleanup first'; exit 1; fi
+  for f in $evidence_files seat-env-doctor.txt seat-env-drive.txt seat-env-cleanup.txt; do rm -f "$run/$f"; done
   rm -f "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/result.txt" "$run/staff-login.json" "$run/candidate-login.json" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt"
   state=$(mktemp -d "${TMPDIR:-/tmp}/classroom-verify.XXXXXXXX") || exit 1
   echo "$state" > "$run/state-path"
@@ -52,23 +52,23 @@ NODE
   if grep -q '^FAIL' "$run/doctor.txt" "$run/theory-doctor.txt"; then exit 1; fi ;;
  drive)
   drive_status=0
-  echo 'FAIL R6 Drive not run: seat installation and cleanup execution are not implemented and verified end-to-end' | tee "$run/seat-env-drive.txt"
-  drive_status=1
   code=$(curl -sS -o "$run/staff-login.json" -w '%{http_code}' -c "$run/cookies.tmp" -H 'Content-Type: application/json' -H 'X-Classroom-Request: staff-login' --data '{"username":"13800138001","password":"Verify-only-password-2026!"}' "$base/api/staff/login" 2>/dev/null || true)
   if [ "$code" = 200 ] && node -e "const x=require(process.argv[1]);process.exit(x.role==='class_teacher'?0:1)" "$run/staff-login.json"; then echo 'PASS staff login: class_teacher'; else echo "FAIL staff login HTTP ${code:-unreachable}"; fi | tee "$run/staff-drive.txt"
   node .cursor/skills/verify-classroom/scripts/org-drive.mjs "$run/org-drive.txt" || drive_status=1
   node .cursor/skills/verify-classroom/scripts/bank-drive.mjs "$run/bank-drive.txt" || drive_status=1
   node .cursor/skills/verify-classroom/scripts/class-drive.mjs "$run/class-drive.txt" || drive_status=1
   node .cursor/skills/verify-classroom/scripts/theory-drive.mjs drive "$run" || drive_status=1
+  node .cursor/skills/verify-classroom/scripts/seat-env-drive.mjs drive "$run" || drive_status=1
   if [ "$drive_status" -ne 0 ]; then exit 1; fi
   if grep -q '^FAIL' "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt" "$run/theory-drive.txt"; then exit 1; fi ;;
  evidence)
   render_evidence; exit $? ;;
  cleanup)
   cleanup_status=0
+  node .cursor/skills/verify-classroom/scripts/seat-env-drive.mjs cleanup "$run" || cleanup_status=1
   node .cursor/skills/verify-classroom/scripts/theory-drive.mjs cleanup "$run" || cleanup_status=1
   if [ -f "$run/gateway.pid" ]; then pid=$(cat "$run/gateway.pid"); if ps -p "$pid" -o command= | grep -q 'node gateway.mjs'; then kill "$pid" 2>/dev/null || true; fi; rm -f "$run/gateway.pid"; fi
-  if [ -f "$run/state-path" ]; then state=$(cat "$run/state-path"); case "$state" in "${TMPDIR:-/tmp}/classroom-verify."*) rm -rf "$state";; *) echo 'FAIL: refusing unexpected state path'; exit 1;; esac; rm -f "$run/state-path"; fi
+  if [ ! -f "$run/seat-env-private.json" ] && [ -f "$run/state-path" ]; then state=$(cat "$run/state-path"); case "$state" in "${TMPDIR:-/tmp}/classroom-verify."*) rm -rf "$state";; *) echo 'FAIL: refusing unexpected state path'; exit 1;; esac; rm -f "$run/state-path"; fi
   rm -f "$run/cookies.tmp"
   echo 'PASS local gateway, temporary class state and cookies cleanup' > "$run/local-cleanup.txt"
   echo "Cleanup: ephemeral state removed; evidence retained at $run"
