@@ -6,6 +6,9 @@ on:
       - '.github/workflows/r6-seat-env.yml'
       - '.cursor/skills/verify-classroom/scripts/seat-env-*.mjs'
       - 'workflows/r6-windows-seat.mjs'
+      - 'workflows/mesh-runtime.cjs'
+      - 'package.json'
+      - 'package-lock.json'
       - 'mesh-material-client.mjs'
   workflow_dispatch:
 permissions:

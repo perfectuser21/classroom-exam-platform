@@ -14,5 +14,9 @@
   },
   "devDependencies": {
     "playwright": "1.64.0"
+  },
+  "optionalDependencies": {
+    "loadavg-windows": "1.1.1",
+    "node-windows": "0.1.14"
   }
 }

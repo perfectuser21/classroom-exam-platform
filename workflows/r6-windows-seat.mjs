@@ -26,10 +26,10 @@ const env={...process.env,HOME:home,USERPROFILE:home,CLASSROOM_STATE_DIR:state,C
 const mesh=resolve('node_modules/meshcentral/meshcentral.js'),ctrl=resolve('node_modules/meshcentral/meshctrl.js');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let phase='Launch',failed=false;
-function launch(file,args,log){const stream=createWriteStream(join(run,log),{flags:'a'});logs.push(stream);const child=spawn(file,args,{env,stdio:['ignore','pipe','pipe'],windowsHide:true});child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});if(log==='drive.log')child.stdout.pipe(process.stdout,{end:false});child.on('error',error=>stream.write('Process error: '+error.code+'\n'));children.push(child);return child}
+function launch(file,args,log){const stream=createWriteStream(join(run,log),{flags:'a'});logs.push(stream);const child=spawn(file,args,{env,stdio:['pipe','pipe','pipe'],windowsHide:true});child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});if(log==='drive.log')child.stdout.pipe(process.stdout,{end:false});child.on('error',error=>stream.write('Process error: '+error.code+'\n'));children.push(child);return child}
 async function node(file,args=[],extra={}){return (await exec(process.execPath,[file,...args],{env:{...env,...extra},timeout:180000,maxBuffer:1048576})).stdout}
 async function ps(source){const file=join(temp,'local-'+randomBytes(6).toString('hex')+'.ps1');writeFileSync(file,"$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';\n"+source);return (await exec('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',file],{timeout:180000,maxBuffer:1048576})).stdout}
-async function until(fn,timeout=120000){const start=Date.now();while(Date.now()-start<timeout){try{const value=await fn();if(value)return value}catch{}await sleep(1000)}throw Error('Timed out during '+phase)}
+async function until(fn,timeout=120000){const start=Date.now();while(Date.now()-start<timeout){for(const child of children){if(child.exitCode!==null||child.signalCode)throw Error('Required child exited during '+phase+'; inspect retained logs')}try{const value=await fn();if(value)return value}catch{}await sleep(1000)}throw Error('Timed out during '+phase)}
 async function control(args){return node(ctrl,args,{MESHCTRL_URL:'wss://127.0.0.1:18443',MESHCTRL_LOGINUSER:credential.username,MESHCTRL_LOGINPASS:credential.password})}
 function localGet(path){return new Promise((resolve,reject)=>{https.get('https://127.0.0.1:18443'+path,{rejectUnauthorized:false},r=>{if(r.statusCode!==200){r.resume();reject(Error('Local Mesh HTTP '+r.statusCode));return}resolve(r)}).on('error',reject)})}
 try{
@@ -40,7 +40,7 @@ try{
  writeFileSync(join(data,'config.json'),JSON.stringify({settings:{cert:'127.0.0.1',port:18443,portBind:'127.0.0.1',redirPort:0,mpsPort:0,wanOnly:true,exactPorts:true},domains:{'':{newAccounts:false}}}));
  // Keep generated passwords out of CLI arguments and retained logs.
  const bootstrap=join(temp,'mesh-bootstrap.cjs');
- writeFileSync(bootstrap,`const fs=require('fs');const c=JSON.parse(fs.readFileSync(${JSON.stringify(credentialFile)}));process.argv=[process.execPath,${JSON.stringify(mesh)},'--datapath',${JSON.stringify(data)},...process.argv.slice(2)];if(process.argv.includes('--createaccount'))process.argv.push(c.username,'--pass',c.password);if(process.argv.includes('--adminaccount'))process.argv.push(c.username);require(${JSON.stringify(mesh)}).mainStart();`);
+ writeFileSync(bootstrap,`const fs=require('fs');const c=JSON.parse(fs.readFileSync(${JSON.stringify(credentialFile)}));process.argv=[process.execPath,${JSON.stringify(mesh)},'--datapath',${JSON.stringify(data)},'--launch','1',...process.argv.slice(2)];if(process.argv.includes('--createaccount'))process.argv.push(c.username,'--pass',c.password);if(process.argv.includes('--adminaccount'))process.argv.push(c.username);require(${JSON.stringify(resolve('workflows/mesh-runtime.cjs'))}).loadMeshRuntime().mainStart();`);
  phase='Launch Mesh account';await node(bootstrap,['--createaccount']);await node(bootstrap,['--adminaccount']);
  phase='Launch Mesh control';console.log(phase);
  launch(process.execPath,[bootstrap],'mesh.log');
