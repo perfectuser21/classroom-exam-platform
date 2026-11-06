@@ -17,3 +17,9 @@ test('disposable Mesh commands pin both node id and group; duplicate identities 
 test('disposable client refuses shared pilot commands before inventory lookup',async()=>{
  const client=createMeshMaterialClient({disposableSeat:seat,invoke:async()=>{throw Error('must not contact mesh')}});await assert.rejects(client.command('WIN-20230823FUQ','write'),/临时验证仅允许指定工位/);
 });
+test('local verification credentials cannot be used without an isolated pinned seat and loopback backend',async()=>{
+ const {verificationMeshCredentials}=await import('./mesh-material-client.mjs');
+ assert.equal(typeof verificationMeshCredentials,'function');
+ assert.equal(verificationMeshCredentials({}),null);
+ for(const env of [{CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE:'/missing'},{CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE:'/missing',CLASSROOM_VERIFY_DISPOSABLE_SEAT:JSON.stringify(seat),CLASSROOM_MESH_BACKEND:'hk'}])assert.throws(()=>verificationMeshCredentials(env),/临时 Mesh 凭据仅限/);
+});

@@ -23,7 +23,7 @@ try{
  }else{
   browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1440,height:1100}}),page=await context.newPage();
   await page.goto(base+'/staff');await page.locator('#username').fill('verify_admin');await page.locator('#password').fill('Verify-only-admin-password-2026!');await Promise.all([page.waitForURL(base+'/'),page.getByRole('button',{name:'登录',exact:true}).click()]);
-  await page.getByRole('button',{name:'查看软件清单',exact:true}).click();await page.locator('#software-catalog h3').first().waitFor();
+  await page.locator('nav[data-page="environment"]').click();await page.getByRole('button',{name:'查看软件清单',exact:true}).click();await page.locator('#software-catalog h3').first().waitFor();
   record(await page.locator('#software-catalog').innerText().then(t=>t.includes('Anaconda')&&t.includes('D:')),'Drive staff UI shows catalog, supported D: target and cleanup action');
   await page.screenshot({path:join(run,'seat-env-catalog.png'),fullPage:true});
   record(!!seat,'Drive disposable Windows seat configured; no pilot seat selected');

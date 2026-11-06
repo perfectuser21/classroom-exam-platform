@@ -1,7 +1,8 @@
 import {meshTarget} from './mesh-target.mjs';
 import {runtimeBin} from './runtime-bins.mjs';
 import {mkdtemp,writeFile,readFile,stat,lstat,rm} from 'node:fs/promises';
-import {statSync} from 'node:fs';
+import {statSync,readFileSync} from 'node:fs';
+import {disposableSeatScope} from './seat-map.mjs';
 import {planAnswerCollection} from './answer-manifest.mjs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -45,11 +46,22 @@ export function createMeshMaterialClient({invoke,disposableSeat=null}) {
   }
  };
 }
+export function verificationMeshCredentials(env){
+ if(!env.CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE)return null;
+ if(env.CLASSROOM_MESH_BACKEND!=='mac'||!disposableSeatScope(env))throw Error('临时 Mesh 凭据仅限回环服务和独立工位');
+ const value=JSON.parse(readFileSync(env.CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE,'utf8'));
+ if(!value||typeof value.username!=='string'||!value.username||typeof value.password!=='string'||!value.password)throw Error('临时 Mesh 凭据不可用');
+ return value;
+}
 export function createLocalMeshInvoke(env){
  const binary=fileURLToPath(new URL('./node_modules/meshcentral/meshctrl.js',import.meta.url));
  return async (args,options={})=>{
+  const local=verificationMeshCredentials(env);
+  let u=local?.username,p=local?.password;
+  if(!local){
   const {stdout}=await exec(runtimeBin('op'),['item','get','MeshCentral 香港教学机房试点管理员','--vault','CS','--format','json','--reveal'],{env,timeout:10000,maxBuffer:1048576});
-  const fields=JSON.parse(stdout).fields,u=fields.find(x=>x.label==='username')?.value,p=fields.find(x=>x.label==='password')?.value;
+  const fields=JSON.parse(stdout).fields;u=fields.find(x=>x.label==='username')?.value;p=fields.find(x=>x.label==='password')?.value;
+  }
   if(!u||!p)throw Error('设备管理凭据不可用');
   return await new Promise((resolve,reject)=>{
    let exceeded=false,timer;
