@@ -49,7 +49,7 @@ try{
  const groups=JSON.parse(await control(['ListDeviceGroups','--json'])),group=groups.find(g=>g.name==='Classroom-R6-Disposable');
  if(!group)throw Error('Isolated group missing');
  phase='Launch Windows agent';console.log(phase);const agent=join(temp,'meshagent.exe');await pipeline(await localGet('/meshagents?id=4&meshid='+encodeURIComponent(group._id.split('/')[2])),createWriteStream(agent));
- launch(agent,['-run'],'agent.log');
+ launch(agent,['run'],'agent.log');
  const device=await until(async()=>{const devices=JSON.parse(await control(['ListDevices','--json']));if(devices.length>1)throw Error('Isolated inventory expected');return devices.find(d=>d.groupname==='Classroom-R6-Disposable'&&(d.conn&1))},180000);
  const name='R6-DISPOSABLE-'+process.env.GITHUB_RUN_ID;await control(['EditDevice','--id',device._id,'--name',name]);
  env.CLASSROOM_VERIFY_DISPOSABLE_SEAT=JSON.stringify({name,id:device._id,group:'Classroom-R6-Disposable',disposable:true});
