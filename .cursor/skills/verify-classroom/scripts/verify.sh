@@ -12,6 +12,10 @@ render_evidence() {
     if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
   done
   if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R0–R4 (including cleanup)' >> "$run/result.txt"; else echo 'PASS verify-classroom R0–R4 theory E2E (including cleanup)' >> "$run/result.txt"; fi
+  for f in seat-env-doctor.txt seat-env-drive.txt; do
+    if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
+  done
+  if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R6 seat install and cleanup' >> "$run/result.txt"; else echo 'PASS verify-classroom R6 seat install and cleanup' >> "$run/result.txt"; fi
   cat "$run/result.txt"
   ! grep -q '^FAIL' "$run/result.txt"
 }
@@ -19,7 +23,7 @@ case "${1:-}" in
  launch)
   if curl -fsS "$base/candidate" >/dev/null 2>&1; then echo 'FAIL: port 18199 already occupied'; exit 1; fi
   if [ -f "$run/theory-private.json" ]; then echo 'FAIL: previous R4 cleanup pending; run cleanup first'; exit 1; fi
-  for f in $evidence_files; do rm -f "$run/$f"; done
+  for f in $evidence_files seat-env-doctor.txt seat-env-drive.txt; do rm -f "$run/$f"; done
   rm -f "$run/doctor.txt" "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/result.txt" "$run/staff-login.json" "$run/candidate-login.json" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt"
   state=$(mktemp -d "${TMPDIR:-/tmp}/classroom-verify.XXXXXXXX") || exit 1
   echo "$state" > "$run/state-path"
@@ -42,10 +46,14 @@ NODE
    if [ "$code" = 200 ] && grep -q '登录' "$run/$surface.html"; then echo "PASS $surface page HTTP 200"; else echo "FAIL $surface page HTTP ${code:-unreachable}"; result=1; fi
   done | tee "$run/doctor.txt"
   # Pipeline subshell cannot propagate result: verify evidence explicitly.
-  node .cursor/skills/verify-classroom/scripts/theory-drive.mjs doctor "$run" || exit 1
+  node .cursor/skills/verify-classroom/scripts/seat-env-doctor.mjs "$run" || result=1
+  node .cursor/skills/verify-classroom/scripts/theory-drive.mjs doctor "$run" || result=1
+  if [ "$result" -ne 0 ]; then exit 1; fi
   if grep -q '^FAIL' "$run/doctor.txt" "$run/theory-doctor.txt"; then exit 1; fi ;;
  drive)
   drive_status=0
+  echo 'FAIL R6 Drive not run: seat installation and cleanup execution are not implemented and verified end-to-end' | tee "$run/seat-env-drive.txt"
+  drive_status=1
   code=$(curl -sS -o "$run/staff-login.json" -w '%{http_code}' -c "$run/cookies.tmp" -H 'Content-Type: application/json' -H 'X-Classroom-Request: staff-login' --data '{"username":"13800138001","password":"Verify-only-password-2026!"}' "$base/api/staff/login" 2>/dev/null || true)
   if [ "$code" = 200 ] && node -e "const x=require(process.argv[1]);process.exit(x.role==='class_teacher'?0:1)" "$run/staff-login.json"; then echo 'PASS staff login: class_teacher'; else echo "FAIL staff login HTTP ${code:-unreachable}"; fi | tee "$run/staff-drive.txt"
   node .cursor/skills/verify-classroom/scripts/org-drive.mjs "$run/org-drive.txt" || drive_status=1

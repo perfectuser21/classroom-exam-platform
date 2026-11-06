@@ -1,0 +1,9 @@
+# R6 seat environment installation and cleanup
+
+Status: **FAIL / not yet delivered**. The catalog exposes candidate software, and the environment-plan job chains Anaconda, OpenCV and ONNX behind explicit Windows-validation flags. The existing cleanup API only previews `E:\ClassroomExam`; it does not delete files. Neither constitutes a completed one-click install/cleanup path.
+
+Doctor must establish an explicitly designated disposable online Windows seat, validated installers and a run-owned exam-file fixture before any write. Existing pilot seats and their exam files must not be treated as disposable. Doctor currently fails until the cleanup execution and real acceptance path are implemented and those prerequisites are established.
+
+Drive must use the actual staff UI and gateway to select a catalog item and seat, install to its supported target (for example `D:\Anaconda3`), and independently check the installed program and version on that Windows seat. Repeat installation to establish the supported idempotent behavior. It must create only a uniquely owned exam-file fixture, preview it, execute cleanup through the product, and independently verify that the fixture is gone while an unrelated sentinel remains. Repeat cleanup and check its receipt. Preserve sanitized job receipts, screenshots and post-operation checks; no mock transport, preview-only result or unit test is a Drive PASS. Real cleanup must be scoped and guarded against unsafe paths, links, concurrent work and active exams.
+
+R6 has its own `seat-env-doctor.txt` and `seat-env-drive.txt` receipts. Missing or failed receipts keep the overall result FAIL without concealing the separate R0–R4 result. No R5 implementation is in scope.
