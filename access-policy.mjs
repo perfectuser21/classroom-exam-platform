@@ -1,7 +1,9 @@
 const permissions={class_teacher:new Set(['classes.read']),admin:new Set(['classes.read','classes.write','devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','results.write','results.arbitrate','accounts.manage','questions.read','questions.write','papers.read','papers.write']),staff:new Set(['classes.read','classes.write','devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','questions.read','questions.write','papers.read','papers.write']),examiner:new Set(['exam.read','results.read','results.write','answers.read','questions.read','papers.read'])};
 export function mayAccess(role,action){return permissions[role]?.has(action)===true}
 export function routeAction(method,path){
- if(path==='/api/class-exam-plans'||/^\/api\/class-exam-plans\/[a-f0-9-]{36}\/assign$/.test(path))return method==='GET'?'papers.read':method==='POST'?'papers.write':null;
+ if(method==='GET'&&path==='/api/class-exam-plans/options')return 'papers.read';
+ if(method==='GET'&&(path==='/api/class-exam-plans'||/^\/api\/class-exam-plans\/[a-f0-9-]{36}\/scores$/.test(path)))return 'classes.read';
+ if(method==='POST'&&(path==='/api/class-exam-plans'||/^\/api\/class-exam-plans\/[a-f0-9-]{36}\/(?:assign|release)$/.test(path)))return 'papers.write';
  if((path==='/api/classes'||path.startsWith('/api/classes/'))&&['GET','POST','PUT','DELETE'].includes(method))return method==='GET'?'classes.read':'classes.write';
  if(['GET','POST','PUT','DELETE'].includes(method)&&(path==='/api/org'||path.startsWith('/api/org/')))return 'accounts.manage';
  if(method==='GET'&&(path==='/api/exams'||path==='/api/capabilities'||path==='/api/workflow-catalog'))return 'exam.read';
