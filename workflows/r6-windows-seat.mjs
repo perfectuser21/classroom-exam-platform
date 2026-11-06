@@ -25,7 +25,7 @@ const env={...process.env,HOME:home,USERPROFILE:home,CLASSROOM_STATE_DIR:state,C
 const mesh=resolve('node_modules/meshcentral/meshcentral.js'),ctrl=resolve('node_modules/meshcentral/meshctrl.js');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let phase='Launch',failed=false;
-function launch(file,args,log){const stream=createWriteStream(join(run,log),{flags:'a'});logs.push(stream);const child=spawn(file,args,{env,stdio:['ignore',stream,stream],windowsHide:true});children.push(child);return child}
+function launch(file,args,log){const stream=createWriteStream(join(run,log),{flags:'a'});logs.push(stream);const child=spawn(file,args,{env,stdio:['ignore','pipe','pipe'],windowsHide:true});child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});if(log==='drive.log')child.stdout.pipe(process.stdout,{end:false});child.on('error',error=>stream.write('Process error: '+error.code+'\n'));children.push(child);return child}
 async function node(file,args=[],extra={}){return (await exec(process.execPath,[file,...args],{env:{...env,...extra},timeout:180000,maxBuffer:1048576})).stdout}
 async function ps(source){const file=join(temp,'local-'+randomBytes(6).toString('hex')+'.ps1');writeFileSync(file,"$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';\n"+source);return (await exec('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',file],{timeout:180000,maxBuffer:1048576})).stdout}
 async function until(fn,timeout=120000){const start=Date.now();while(Date.now()-start<timeout){try{const value=await fn();if(value)return value}catch{}await sleep(1000)}throw Error('Timed out during '+phase)}
