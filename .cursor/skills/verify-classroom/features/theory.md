@@ -1,0 +1,13 @@
+# R4 online theory exam
+
+The Drive runs the real gateway and local Moodle pilot. It creates one disposable Moodle student with a valid phone username, a matching local student account and class roster entry, a classified single-choice question and a one-version weighted paper. It publishes the question and hidden quiz through the existing publication jobs.
+
+Playwright opens `/classes` as the test administrator, creates a class/paper plan, assigns the roster and clicks 放卷. The first release is rejected without seats and the second without identity confirmation. After saving a seat and confirming the disposable identity through the existing APIs, the class UI release must return an `open` release receipt. Both release routes share the existing identity, device-job and candidate-status guards.
+
+A separate browser context logs in at `/candidate`, opens the real Moodle quiz, renders its answer card, selects the correct answer and submits. Moodle must confirm `finished`. The class-scoped score endpoint and `/classes` must both show exactly the bound disposable student with `1 / 1`. Assigned and unassigned teacher access and rejection after a roster change are checked. This does not exercise R5/R6 or prove 50-person browser load; A/B aggregation and 1–50 participant validation have automated regression coverage.
+
+The plan persists an immutable username/Moodle ID/version binding and the assignment receipt ID. Release and score reads reject changed, disabled or unresolved rosters. Scores reuse `loadExamSummary` for only the assigned IDs in each version and recheck class visibility and roster after asynchronous Moodle work. Plans created by the earlier partial implementation without a binding cannot release; they require review rather than silently adopting a roster.
+
+Evidence includes `theory-doctor.txt`, `theory-drive.txt`, `r4-class-release.png`, `r4-answer-card.png`, `r4-submitted.png`, `r4-class-scores.png`, and `r4-class-scores.json`.
+
+Cleanup uses a private run manifest and a Moodle user `idnumber` marker. It validates quiz and question ownership before deleting through Moodle APIs. It verifies deletion of the disposable user's enrollment, tokens, service authorization, roles, attempts and grades, plus the run's quizzes, groups and question. Moodle retains its normal anonymized deleted-user tombstone. A fingerprint of preexisting enrolled identities, password hashes, account states, enrollment and role/service assignments must be unchanged. Cleanup removes the private manifest/password and the temporary gateway state and cookies; sanitized evidence remains. Interrupted runs retain the manifest for retry, and Launch refuses to overwrite it. `result.txt` cannot PASS without both Moodle and local cleanup receipts.

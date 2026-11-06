@@ -1,28 +1,44 @@
 ---
 name: verify-classroom
-description: Verify the actual classroom gateway login surfaces and retain evidence.
+description: Verify real classroom login, organization, bank, roster and R4 theory exam with disposable Moodle identity and retained evidence.
 ---
 
 # Verify classroom
 
-Run from this repository root. This exercises `gateway.mjs` at `/staff` and `/candidate`, not `candidate-dev-server.mjs`. Install locked dependencies with `npm ci`. The gateway requires `~/.credentials/1password.env` at startup and `~/.credentials/classroom-frontend.json` for authenticated management routes. Never copy credentials into evidence. Candidate login additionally needs an isolated Moodle test account and the configured Moodle/SSH connectivity. No Moodle account is created or altered by this script.
+Run from this repository root. Exercise `gateway.mjs` at `/staff`, `/classes` and `/candidate`, not `candidate-dev-server.mjs`. Install locked dependencies with `npm ci` and the browser with `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`. The gateway requires `~/.credentials/1password.env`, `~/.credentials/classroom-frontend.json`, and the Moodle read API token in `~/.credentials/moodle-pilot-api.json`. Use the credentials skill to refresh secrets from 1Password; never print or commit them. The local Moodle Docker pilot and HTTP bridge must be running. No shared pilot account is altered or required on a roster.
 
 ## Launch
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh launch` starts the gateway on loopback port 18199 with a temporary `CLASSROOM_STATE_DIR`, staff auth enabled, and a synthetic class teacher. It refuses an occupied port. It does not reuse the production state directory. Keep all stages in the same shell if your runner terminates background processes between commands.
+`./.cursor/skills/verify-classroom/scripts/verify.sh launch` starts the gateway on loopback port 18199 with temporary `CLASSROOM_STATE_DIR`, synthetic staff accounts, question/paper publication, assignment and release enabled, and identity verification required. It refuses an occupied port or an outstanding R4 cleanup manifest. Keep all stages in one shell if the runner terminates background processes between calls.
 
 ## Doctor
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh doctor` checks both served login pages. HTTP 200 alone does not prove authentication or Moodle availability.
+`./.cursor/skills/verify-classroom/scripts/verify.sh doctor` checks both served login pages, the browser runtime, Moodle provisioning/cleanup prerequisites and the enrolled-user API. Missing prerequisites are explicit FAILs.
 
 ## Drive
 
-Set `CLASSROOM_VERIFY_CANDIDATE_USER` and `CLASSROOM_VERIFY_CANDIDATE_PASSWORD` in the environment to a dedicated Moodle test account, then run `./.cursor/skills/verify-classroom/scripts/verify.sh drive`. The script submits the real login APIs and checks the class teacher role, Moodle login response, admin organization and role provisioning API, specialty, bank and weighted draft paper APIs, and class/roster and teacher ownership APIs. Missing credentials are an explicit candidate FAIL. This is HTTP-driven verification, not a browser interaction or proof of class/course isolation.
+`./.cursor/skills/verify-classroom/scripts/verify.sh drive` exercises real staff login, organization and role provisioning, specialty and question bank, weighted paper, class/roster and teacher access. The R4 Drive then provisions a disposable phone-username Moodle student and links it to an R3 roster. A real browser creates and assigns a class plan, verifies release guards, releases from the class UI, logs in as the disposable student, submits its answer card and checks the class theory score in both API and UI. Shared candidate credentials are not needed. See [R4 acceptance](features/theory.md).
 
 ## Evidence
 
-Run `./.cursor/skills/verify-classroom/scripts/verify.sh evidence`. Artifacts live under `.classroom-evidence/current/` (override with `CLASSROOM_VERIFY_RUN`); `result.txt` is PASS only if both login surfaces, organization, bank and class drives pass. HTML snapshots, sanitized response bodies, logs and text results remain there. Do not commit artifacts containing real identity data. See `features/` for feature-specific acceptance and limitations.
+`./.cursor/skills/verify-classroom/scripts/verify.sh evidence` writes `.classroom-evidence/current/result.txt` (override with `CLASSROOM_VERIFY_RUN`). R0–R4 and cleanup receipts are all required: before Cleanup the result explicitly reports missing cleanup and remains FAIL. Sanitized response bodies, screenshots, logs and check results remain in the run directory. The private `theory-private.json` temporarily contains the disposable password and cleanup ownership manifest; do not copy it into reports or commit any run artifacts.
 
 ## Cleanup
 
-Always run `./.cursor/skills/verify-classroom/scripts/verify.sh cleanup`, even on failure. It stops only the gateway it launched, deletes its temporary state and cookie, and retains the evidence directory. Re-read `result.txt` after cleanup. This loop does not establish student password changes, browser interaction or unfinished-only examiner scoring.
+Always run `./.cursor/skills/verify-classroom/scripts/verify.sh cleanup`, including after Drive failure. It deletes only the manifest-owned disposable Moodle identity and exam data, verifies shared pilot identities are unchanged, removes the private manifest, stops its gateway and removes temporary state and cookies. It retains evidence and rebuilds `result.txt`. If Moodle cleanup fails, the manifest remains available for retry and the result remains FAIL. Re-read the result after Cleanup. Moodle's standard anonymized deleted-user tombstone remains.
+
+For a single-shell run, ensure Cleanup runs even when Doctor or Drive fails:
+
+```bash
+verify=.cursor/skills/verify-classroom/scripts/verify.sh
+"$verify" launch || exit 1
+trap '"$verify" cleanup' EXIT
+"$verify" doctor && "$verify" drive
+"$verify" evidence
+"$verify" cleanup
+status=$?
+trap - EXIT
+exit "$status"
+```
+
+This scope ends at R4 theory E2E; do not start R5/R6. The harness does not establish student password changes, 50-person browser load or unfinished-only examiner scoring.

@@ -49,7 +49,7 @@ export class ClassExamPlans {
   if(release.paperId!==p.paperId||p.roster.length!==release.groups.reduce((n,g)=>n+g.studentIds.length,0)||p.roster.some(r=>!release.groups.some(g=>g.version===r.version&&g.studentIds.includes(r.studentId))))throw Error('考试分配与班级名单不一致');
   return {plan:p,groups:release.groups};
  }
- release(id,identity){const {plan}=this.bound(id,identity);return this.releasePaper(plan.paperId)}
+ release(id,identity){const {plan}=this.bound(id,identity);return this.releasePaper(plan.paperId,identity)}
  async scores(id,identity){
   const {plan,groups}=this.bound(id,identity),students=[];
   for(const group of groups){
