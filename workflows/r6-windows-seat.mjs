@@ -27,7 +27,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let phase='Launch',failed=false;
 function launch(file,args,log){const stream=createWriteStream(join(run,log),{flags:'a'});logs.push(stream);const child=spawn(file,args,{env,stdio:['ignore',stream,stream],windowsHide:true});children.push(child);return child}
 async function node(file,args=[],extra={}){return (await exec(process.execPath,[file,...args],{env:{...env,...extra},timeout:180000,maxBuffer:1048576})).stdout}
-async function ps(source){return (await exec('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from("$ErrorActionPreference='Stop';"+source,'utf16le').toString('base64')],{timeout:180000,maxBuffer:1048576})).stdout}
+async function ps(source){const file=join(temp,'local-'+randomBytes(6).toString('hex')+'.ps1');writeFileSync(file,"$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';\n"+source);return (await exec('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',file],{timeout:180000,maxBuffer:1048576})).stdout}
 async function until(fn,timeout=120000){const start=Date.now();while(Date.now()-start<timeout){try{const value=await fn();if(value)return value}catch{}await sleep(1000)}throw Error('Timed out during '+phase)}
 async function control(args){return node(ctrl,args,{MESHCTRL_URL:'wss://127.0.0.1:18443',MESHCTRL_LOGINUSER:credential.username,MESHCTRL_LOGINPASS:credential.password})}
 function localGet(path){return new Promise((resolve,reject)=>{https.get('https://127.0.0.1:18443'+path,{rejectUnauthorized:false},r=>{if(r.statusCode!==200){r.resume();reject(Error('Local Mesh HTTP '+r.statusCode));return}resolve(r)}).on('error',reject)})}
@@ -35,7 +35,7 @@ try{
  console.log('Launch: isolated Windows storage, Mesh and gateway');
  // New real NTFS volumes when the hosted image has no D:/E:. Never reformat
  // an existing drive. The runner VM and these VHDs are destroyed by Actions.
- await ps(`foreach($letter in @('D','E')){if(!(Test-Path ($letter+':\\'))){$vhd=Join-Path '${temp.replaceAll("'","''")}' ($letter+'.vhdx');$maximum=if($letter -eq 'D'){40000}else{128};$script=@('create vdisk file="'+$vhd+'" maximum='+$maximum+' type=expandable','select vdisk file="'+$vhd+'"','attach vdisk','create partition primary','format fs=ntfs quick label=ClassroomR6','assign letter='+$letter);$script | diskpart | Out-Null;if(!(Test-Path ($letter+':\\'))){throw 'volume unavailable'}}}`);
+ console.log(await ps(`foreach($letter in @('D','E')){if(!(Test-Path ($letter+':\\'))){$vhd=Join-Path '${temp.replaceAll("'","''")}' ($letter+'.vhdx');$maximum=if($letter -eq 'D'){40000}else{128};$script=@(('create vdisk file="{0}" maximum={1} type=expandable' -f $vhd,$maximum),('select vdisk file="{0}"' -f $vhd),'attach vdisk','create partition primary','format fs=ntfs quick label=ClassroomR6',('assign letter={0}' -f $letter));$file=$vhd+'.txt';$script | Set-Content -LiteralPath $file -Encoding ASCII;diskpart /s $file;if(!(Test-Path ($letter+':\\'))){throw ('volume unavailable: '+$letter)}}};Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,FreeSpace,Size | Format-Table`));
  writeFileSync(join(data,'config.json'),JSON.stringify({settings:{cert:'127.0.0.1',port:18443,portBind:'127.0.0.1',redirPort:0,mpsPort:0,wanOnly:true,exactPorts:true},domains:{'':{newAccounts:false}}}));
  // Keep generated passwords out of CLI arguments and retained logs.
  const bootstrap=join(temp,'mesh-bootstrap.cjs');
@@ -71,6 +71,6 @@ finally{
  failed ||= result.includes('FAIL');result+=(failed?'FAIL':'PASS')+' verify-classroom R6 disposable Windows install and cleanup\n';writeFileSync(join(run,'result.txt'),result);console.log(result);
  // Private Mesh config, account DBs and passwords never become artifacts.
  // A failed fixture cleanup retains its manifest until the VM is destroyed.
- if(!existsSync(join(run,'seat-env-private.json')))rmSync(temp,{recursive:true,force:true});
+ if(!existsSync(join(run,'seat-env-private.json'))){try{await ps(`foreach($letter in @('D','E')){$vhd=Join-Path '${temp.replaceAll("'","''")}' ($letter+'.vhdx');if(Test-Path -LiteralPath $vhd){$file=$vhd+'.detach.txt';@(('select vdisk file="{0}"' -f $vhd),'detach vdisk') | Set-Content -LiteralPath $file -Encoding ASCII;diskpart /s $file | Out-Null}}`);rmSync(temp,{recursive:true,force:true})}catch{console.log('INFO R6: runner VM destruction will remove remaining temporary storage')}}
  process.exitCode=failed?1:0;
 }
