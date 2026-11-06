@@ -1,6 +1,6 @@
 # R6 seat environment installation and cleanup
 
-Status: **FAIL / not yet delivered**. The catalog exposes candidate software, and the environment-plan job chains Anaconda, OpenCV and ONNX behind explicit Windows-validation flags. The existing cleanup API only previews `E:\ClassroomExam`; it does not delete files. Neither constitutes a completed one-click install/cleanup path.
+Status: **FAIL / not yet delivered**. The catalog exposes candidate software, and the environment-plan job chains Anaconda, OpenCV and ONNX behind explicit Windows-validation flags. The existing cleanup API only previews `E:\ClassroomExam`; it does not delete files. Neither constitutes a completed one-click install/cleanup path. After a successful Anaconda installer receipt, the existing runner now performs a separate read-only D: health probe and requires matching versions before reporting success; this remains unverified on Windows. A new job can retry a definite failure; an unknown result remains locked for review.
 
 Doctor must establish an explicitly designated disposable online Windows seat, validated installers and a run-owned exam-file fixture before any write. Existing pilot seats and their exam files must not be treated as disposable. Doctor currently fails until the cleanup execution and real acceptance path are implemented and those prerequisites are established.
 
