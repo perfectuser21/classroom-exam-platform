@@ -3,6 +3,7 @@ import {join,resolve} from 'node:path';
 import {randomUUID,randomBytes} from 'node:crypto';
 import {execFile} from 'node:child_process';
 import {chromium} from 'playwright';
+import {practicalDrive} from './practical-drive.mjs';
 import {runtimeBin} from '../../../../runtime-bins.mjs';
 import {moodleCandidateCall} from '../../../../moodle-candidate.mjs';
 const mode=process.argv[2],run=resolve(process.argv[3]||'.classroom-evidence/current'),base='http://127.0.0.1:18199';
@@ -63,6 +64,7 @@ try{
   m.paperIds.push(paper.id);savePrivate(m);
   const pub=await req('/api/paper-publications','POST',{paperId:paper.id},'paper-publish',202),publication=await poll('/api/paper-publications/'+pub.id,'status','completed');
   record(publication.papers.length===1&&publication.papers[0].status==='created','R4 real Moodle question and hidden quiz published');
+  const practical=practicalDrive({run,req,api,browser});await practical.prepare({quiz:publication.papers[0].quizId,department:dept.id});
   const page=await ctx.newPage();page.setDefaultTimeout(25000);
   await page.goto(base+'/classes');await page.getByRole('button',{name:cl.name,exact:true}).click();
   await page.locator('#planPaper').selectOption(paper.id);await page.getByRole('button',{name:'创建考试计划',exact:true}).click();
@@ -88,11 +90,13 @@ try{
   const loggedBody=await logged.json();record(logged.status()===200&&loggedBody.ok===true,'R4 disposable candidate Moodle login through real gateway');
   writeFileSync(join(run,'candidate-login.json'),JSON.stringify(loggedBody)+'\n');writeFileSync(join(run,'candidate-drive.txt'),'PASS candidate Moodle login (disposable R4 student)\n');
   const quizName='试点草稿 '+paper.name+' [A]';const examRow=candidate.locator('#exam-list > div').filter({hasText:quizName});await examRow.getByRole('button',{name:'开始或继续'}).click();
+  await practical.candidate({page:candidate});
   await candidate.locator('#questions input[type=radio]').first().check();
   record(await candidate.locator('#question-nav button').count()>0,'R4 candidate answer card rendered from real Moodle attempt');
   await candidate.screenshot({path:join(run,'r4-answer-card.png'),fullPage:true});
   await candidate.locator('#answers button[type=submit]').click();await candidate.waitForFunction(()=>document.querySelector('#notice').textContent.startsWith('交卷成功'));
   record(true,'R4 candidate submits the answer card and Moodle confirms finished');
+  await practical.score();
   await candidate.screenshot({path:join(run,'r4-submitted.png'),fullPage:true});
   let scores;for(let i=0;i<40;i++){scores=await req('/api/class-exam-plans/'+plan.id+'/scores');if(scores.students[0]?.state==='finished'&&scores.students[0]?.score===1)break;await new Promise(r=>setTimeout(r,250))}
   record(scores.students.length===1&&scores.students[0].id===m.userId&&scores.students[0].username===m.username&&scores.students[0].state==='finished'&&scores.students[0].score===1&&scores.students[0].maxScore===1,'R4 class-scoped theory score is 1 / 1 for the submitted roster student');

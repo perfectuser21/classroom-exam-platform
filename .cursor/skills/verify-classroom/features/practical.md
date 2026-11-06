@@ -1,0 +1,5 @@
+# R5 practical exam
+
+The Drive uses the same disposable Moodle student and quiz as R4. Before release, it creates a level-5 practical task, generates its taskbook, uploads a CSV source, saves a 100% task plan and delivers both taskbook and source. The candidate browser opens the quiz, downloads the source, sees the taskbook, selects the task and uploads a CSV answer before submitting the attempt. Two separately authenticated examiner accounts score that exact answer after submission. An administrator finalizes the arbitration and confirms and reads back the 90-point weighted score.
+
+Doctor requires both candidate material and upload services to be enabled. `practical-doctor.txt`, `practical-drive.txt` and `r5-candidate-upload.png` record the outcome. R4's ownership manifest cleans the shared disposable Moodle identity and quiz; local taskbooks, source, answers, scores and staff accounts are removed with the temporary gateway state. Shared pilot accounts are not modified. The score interactions are real gateway requests, while the candidate path is browser-driven; this does not prove the examiner UI or multiple concurrent candidates.
