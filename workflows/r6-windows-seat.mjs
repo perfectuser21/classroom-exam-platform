@@ -22,7 +22,7 @@ const credential={username:'r6admin',password:randomBytes(32).toString('hex')};
 const credentialFile=join(temp,'mesh-private.json');writeFileSync(credentialFile,JSON.stringify(credential));
 writeFileSync(join(home,'.credentials/1password.env'),'# Isolated runner; no shared secrets\n');
 writeFileSync(join(home,'.credentials/classroom-frontend.json'),JSON.stringify({username:'r6-basic',password:randomBytes(32).toString('hex')}));
-const env={...process.env,HOME:home,USERPROFILE:home,CLASSROOM_STATE_DIR:state,CLASSROOM_PORT:'18199',CLASSROOM_ENABLE_STAFF_AUTH:'1',CLASSROOM_ENABLE_ANACONDA:'1',CLASSROOM_MESH_BACKEND:'mac',CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE:credentialFile};
+const env={...process.env,HOME:home,USERPROFILE:home,CLASSROOM_STATE_DIR:state,CLASSROOM_PORT:'18199',CLASSROOM_ENABLE_STAFF_AUTH:'1',CLASSROOM_ENABLE_ANACONDA:'1',CLASSROOM_MESH_BACKEND:'mac',CLASSROOM_VERIFY_MESH_CREDENTIAL_FILE:credentialFile,CLASSROOM_VERIFY_MESH_TRACE_FILE:join(run,'mesh-transport.log')};
 const mesh=resolve('node_modules/meshcentral/meshcentral.js'),ctrl=resolve('node_modules/meshcentral/meshctrl.js');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let phase='Launch',failed=false;

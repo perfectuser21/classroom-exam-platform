@@ -1,7 +1,7 @@
 import {meshTarget} from './mesh-target.mjs';
 import {runtimeBin} from './runtime-bins.mjs';
 import {mkdtemp,writeFile,readFile,stat,lstat,rm} from 'node:fs/promises';
-import {statSync,readFileSync} from 'node:fs';
+import {statSync,readFileSync,appendFileSync} from 'node:fs';
 import {disposableSeatScope} from './seat-map.mjs';
 import {planAnswerCollection} from './answer-manifest.mjs';
 import {tmpdir} from 'node:os';
@@ -65,7 +65,7 @@ export function createLocalMeshInvoke(env){
   if(!u||!p)throw Error('设备管理凭据不可用');
   return await new Promise((resolve,reject)=>{
    let exceeded=false,timer;
-   const child=execFile(process.execPath,[binary,...args],{env:{...env,MESHCTRL_URL:meshTarget(env).url,MESHCTRL_LOGINUSER:u,MESHCTRL_LOGINPASS:p},timeout:Math.min(options.timeout||180000,1800000),maxBuffer:1048576},(error,out)=>{if(timer)clearInterval(timer);if(error||exceeded)return reject(Error('设备文件通道异常'));resolve(out)});
+   const child=execFile(process.execPath,[binary,...args],{env:{...env,MESHCTRL_URL:meshTarget(env).url,MESHCTRL_LOGINUSER:u,MESHCTRL_LOGINPASS:p},timeout:Math.min(options.timeout||180000,1800000),maxBuffer:1048576},(error,out,stderr)=>{if(timer)clearInterval(timer);if(local&&env.CLASSROOM_VERIFY_MESH_TRACE_FILE&&['RunCommand','upload'].includes(args[0])){const redact=value=>String(value||'').replaceAll(p,'[redacted]').slice(-8000);appendFileSync(env.CLASSROOM_VERIFY_MESH_TRACE_FILE,JSON.stringify({action:args[0],code:error?.code||null,stdout:redact(out),stderr:redact(stderr)})+'\n',{mode:0o600})}if(error||exceeded)return reject(Error('设备文件通道异常'));resolve(out)});
    if(options.limitPath){timer=setInterval(()=>{try{if(statSync(options.limitPath).size>options.maxBytes){exceeded=true;child.kill()}}catch(e){if(e.code!=='ENOENT'){exceeded=true;child.kill()}}},50);timer.unref()}
   });
  };

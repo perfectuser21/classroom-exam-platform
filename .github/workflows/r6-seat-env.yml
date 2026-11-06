@@ -42,6 +42,7 @@ jobs:
             .classroom-evidence/windows/seat-env-*.json
             .classroom-evidence/windows/gateway.log
             .classroom-evidence/windows/mesh.log
+            .classroom-evidence/windows/mesh-transport.log
             .classroom-evidence/windows/agent.log
             .classroom-evidence/windows/drive.log
             !.classroom-evidence/windows/*private*
