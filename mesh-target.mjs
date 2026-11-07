@@ -16,8 +16,8 @@ export async function localPreflight(invoke,selected,command){
  }
  return out;
 }
-export async function pilotDeviceSummary(invoke){
+export async function pilotDeviceSummary(invoke,disposableSeat=null){
  const devices=JSON.parse(await invoke(['ListDevices','--json']));
  if(!Array.isArray(devices))throw Error('设备列表无效');
- return devices.filter(x=>x.groupname==='教学机房-5台试点'&&typeof x.name==='string').map(x=>({name:x.name,online:!!(x.conn&1)}));
+ return devices.filter(x=>(disposableSeat?(x.name===disposableSeat.name&&x.groupname===disposableSeat.group&&x._id===disposableSeat.id):x.groupname==='教学机房-5台试点')&&typeof x.name==='string').map(x=>({name:x.name,online:!!(x.conn&1)}));
 }

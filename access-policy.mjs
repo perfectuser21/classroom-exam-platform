@@ -1,6 +1,7 @@
 const permissions={class_teacher:new Set(['classes.read']),admin:new Set(['classes.read','classes.write','devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','results.write','results.arbitrate','accounts.manage','questions.read','questions.write','papers.read','papers.write']),staff:new Set(['classes.read','classes.write','devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','questions.read','questions.write','papers.read','papers.write']),examiner:new Set(['exam.read','results.read','results.write','answers.read','questions.read','papers.read'])};
 export function mayAccess(role,action){return permissions[role]?.has(action)===true}
 export function routeAction(method,path){
+ if(method==='POST'&&/^\/api\/cleanup-previews\/[a-f0-9-]{36}\/execute$/.test(path))return 'software.run';
  if(method==='GET'&&path==='/api/class-exam-plans/options')return 'papers.read';
  if(method==='GET'&&(path==='/api/class-exam-plans'||/^\/api\/class-exam-plans\/[a-f0-9-]{36}\/scores$/.test(path)))return 'classes.read';
  if(method==='POST'&&(path==='/api/class-exam-plans'||/^\/api\/class-exam-plans\/[a-f0-9-]{36}\/(?:assign|release)$/.test(path)))return 'papers.write';

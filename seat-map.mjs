@@ -7,3 +7,11 @@ export class SeatMaps{
  forQuiz(quizId){if(!Number.isSafeInteger(quizId)||quizId<1)throw Error('考试标识无效');const matches=this.getAssignments().filter(x=>x.status==='prepared'&&x.groups?.some(g=>g.quizId===quizId));if(matches.length!==1)throw Error('考试尚未分配');const plan=this.plan(matches[0].paperId),group=plan.groups.find(g=>g.quizId===quizId),savedItems=this.items.filter(x=>x.paperId===plan.paperId);if(savedItems.length>1||(savedItems.length===1&&!validAssignments(plan,savedItems[0].assignments,this.devices)))throw Error('工位记录已损坏');const saved=savedItems[0];return {paperId:plan.paperId,studentIds:[...plan.studentIds],groupStudentIds:[...group.studentIds],allAssignments:structuredClone(saved?.assignments||[]),assignments:structuredClone((saved?.assignments||[]).filter(x=>group.studentIds.includes(x.studentId)))}}
 }
 export function validateSeatSelection(maps,exam,assignments){if(typeof exam!=='string'||!/^exam-[1-9]\d{0,9}$/.test(exam)||!Array.isArray(assignments)||!assignments.length)throw Error('考试工位无效');const plan=maps.forQuiz(Number(exam.slice(5)));if(!plan.assignments.length)throw Error('请先保存考生工位安排');const used=new Set();for(const item of assignments){if(!item||typeof item.student!=='string'||typeof item.device!=='string'||used.has(item.student)||!plan.assignments.some(a=>String(a.studentId)===item.student&&a.device===item.device))throw Error('所选工位与考生安排不一致');used.add(item.student)}}
+// A verification seat is separate from the shared pilot group and pins its node.
+export const pilotSeatDevices=['WIN-20230823FUQ','WIN-20230823IRL','WIN-20230823ITQ','WIN-20230823JJU','WIN-20230823PZA'];
+export function disposableSeatScope(env){
+ if(!env.CLASSROOM_VERIFY_DISPOSABLE_SEAT)return null;
+ let s;try{s=JSON.parse(env.CLASSROOM_VERIFY_DISPOSABLE_SEAT)}catch{throw Error('临时工位配置无效')}
+ if(!s||Object.keys(s).sort().join(',')!=='disposable,group,id,name'||s.disposable!==true||s.group!=='Classroom-R6-Disposable'||typeof s.name!=='string'||!/^R6-DISPOSABLE-[A-Za-z0-9-]{1,40}$/.test(s.name)||typeof s.id!=='string'||!/^node\/[A-Za-z0-9_@.-]*\/[A-Za-z0-9_$@.-]{1,128}$/.test(s.id))throw Error('临时工位必须独立命名、分组并固定设备标识');
+ return {...s};
+}

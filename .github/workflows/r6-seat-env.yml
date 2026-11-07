@@ -1,0 +1,50 @@
+name: R6 disposable Windows seat Drive
+on:
+  push:
+    branches: [poteto/r6-seat-env]
+    paths:
+      - '.github/workflows/r6-seat-env.yml'
+      - '.cursor/skills/verify-classroom/scripts/seat-env-*.mjs'
+      - 'workflows/r6-windows-seat.mjs'
+      - 'workflows/r6-prepare-windows.ps1'
+      - 'workflows/mesh-runtime.cjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'mesh-material-client.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r6-disposable-windows
+  cancel-in-progress: false
+jobs:
+  windows-seat:
+    runs-on: windows-2025
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium
+      - name: Real gateway, Mesh Agent, installer, UI and cleanup
+        run: node workflows/r6-windows-seat.mjs
+      - name: Retain sanitized receipts and browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r6-windows-seat-${{ github.run_id }}
+          path: |
+            .classroom-evidence/windows/*.txt
+            .classroom-evidence/windows/*.png
+            .classroom-evidence/windows/seat-env-*.json
+            .classroom-evidence/windows/gateway.log
+            .classroom-evidence/windows/mesh.log
+            .classroom-evidence/windows/mesh-transport.log
+            .classroom-evidence/windows/agent.log
+            .classroom-evidence/windows/drive.log
+            !.classroom-evidence/windows/*private*
+          if-no-files-found: error
+          retention-days: 14
