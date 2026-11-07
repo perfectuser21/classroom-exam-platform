@@ -5,13 +5,13 @@ base=http://127.0.0.1:18199
 run=${CLASSROOM_VERIFY_RUN:-.classroom-evidence/current}
 mkdir -p "$run"
 run=$(cd "$run" && pwd)
-evidence_files='doctor.txt theory-doctor.txt staff-drive.txt candidate-drive.txt org-drive.txt bank-drive.txt class-drive.txt theory-drive.txt theory-cleanup.txt local-cleanup.txt'
+evidence_files='doctor.txt theory-doctor.txt practical-doctor.txt staff-drive.txt candidate-drive.txt org-drive.txt bank-drive.txt class-drive.txt theory-drive.txt practical-drive.txt theory-cleanup.txt local-cleanup.txt'
 render_evidence() {
   : > "$run/result.txt"
   for f in $evidence_files; do
     if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
   done
-  if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R0–R4 (including cleanup)' >> "$run/result.txt"; else echo 'PASS verify-classroom R0–R4 theory E2E (including cleanup)' >> "$run/result.txt"; fi
+  if grep -q '^FAIL' "$run/result.txt"; then echo 'FAIL verify-classroom R0–R5 (including cleanup)' >> "$run/result.txt"; else echo 'PASS verify-classroom R0–R5 theory and practical E2E (including cleanup)' >> "$run/result.txt"; fi
   for f in seat-env-doctor.txt seat-env-drive.txt seat-env-cleanup.txt; do
     if [ -s "$run/$f" ]; then cat "$run/$f" >> "$run/result.txt"; else echo "FAIL missing $f" >> "$run/result.txt"; fi
   done
@@ -35,7 +35,7 @@ await a.create({username:'13800138001',password:'Verify-only-password-2026!',rol
 await a.create({username:'verify_admin',password:'Verify-only-admin-password-2026!',role:'admin'});
 NODE
   if [ $? -ne 0 ]; then echo 'FAIL: cannot seed test account'; exit 1; fi
-  CLASSROOM_STATE_DIR="$state" CLASSROOM_PORT=18199 CLASSROOM_ENABLE_STAFF_AUTH=1 CLASSROOM_ENABLE_QUESTION_PUBLISH=1 CLASSROOM_ENABLE_PAPER_PUBLISH=1 CLASSROOM_ENABLE_ASSIGNMENT=1 CLASSROOM_ENABLE_EXAM_RELEASE=1 CLASSROOM_REQUIRE_IDENTITY_VERIFICATION=1 node gateway.mjs >"$run/gateway.log" 2>&1 &
+  CLASSROOM_STATE_DIR="$state" CLASSROOM_PORT=18199 CLASSROOM_ENABLE_STAFF_AUTH=1 CLASSROOM_ENABLE_QUESTION_PUBLISH=1 CLASSROOM_ENABLE_PAPER_PUBLISH=1 CLASSROOM_ENABLE_ASSIGNMENT=1 CLASSROOM_ENABLE_EXAM_RELEASE=1 CLASSROOM_ENABLE_CANDIDATE_MATERIALS=1 CLASSROOM_ENABLE_CANDIDATE_UPLOAD=1 CLASSROOM_REQUIRE_IDENTITY_VERIFICATION=1 node gateway.mjs >"$run/gateway.log" 2>&1 &
   echo $! > "$run/gateway.pid"
   for i in {1..30}; do if curl -fsS "$base/staff" >/dev/null 2>&1; then echo 'Launch: gateway running'; exit 0; fi; if ! kill -0 "$(cat "$run/gateway.pid")" 2>/dev/null; then echo 'FAIL: gateway exited; see gateway.log'; exit 1; fi; sleep 1; done
   echo 'FAIL: gateway did not become ready; see gateway.log'; exit 1 ;;
@@ -45,11 +45,20 @@ NODE
    code=$(curl -sS -o "$run/$surface.html" -w '%{http_code}' "$base/$surface" 2>/dev/null || true)
    if [ "$code" = 200 ] && grep -q '登录' "$run/$surface.html"; then echo "PASS $surface page HTTP 200"; else echo "FAIL $surface page HTTP ${code:-unreachable}"; result=1; fi
   done | tee "$run/doctor.txt"
+  : > "$run/practical-doctor.txt"
+  for feature in materials upload; do
+   if curl -fsS "$base/api/candidate/$feature-config" | node -e "let s='';process.stdin.on('data',x=>s+=x);process.stdin.on('end',()=>{try{process.exit(JSON.parse(s).enabled===true?0:1)}catch{process.exit(1)}})"; then
+    echo "PASS R5 candidate $feature enabled" >> "$run/practical-doctor.txt"
+   else
+    echo "FAIL R5 candidate $feature unavailable or disabled" >> "$run/practical-doctor.txt"
+   fi
+  done
+  cat "$run/practical-doctor.txt"
   # Pipeline subshell cannot propagate result: verify evidence explicitly.
   node .cursor/skills/verify-classroom/scripts/seat-env-doctor.mjs "$run" || result=1
   node .cursor/skills/verify-classroom/scripts/theory-drive.mjs doctor "$run" || result=1
   if [ "$result" -ne 0 ]; then exit 1; fi
-  if grep -q '^FAIL' "$run/doctor.txt" "$run/theory-doctor.txt"; then exit 1; fi ;;
+  if grep -q '^FAIL' "$run/doctor.txt" "$run/theory-doctor.txt" "$run/practical-doctor.txt"; then exit 1; fi ;;
  drive)
   drive_status=0
   code=$(curl -sS -o "$run/staff-login.json" -w '%{http_code}' -c "$run/cookies.tmp" -H 'Content-Type: application/json' -H 'X-Classroom-Request: staff-login' --data '{"username":"13800138001","password":"Verify-only-password-2026!"}' "$base/api/staff/login" 2>/dev/null || true)
@@ -60,7 +69,7 @@ NODE
   node .cursor/skills/verify-classroom/scripts/theory-drive.mjs drive "$run" || drive_status=1
   node .cursor/skills/verify-classroom/scripts/seat-env-drive.mjs drive "$run" || drive_status=1
   if [ "$drive_status" -ne 0 ]; then exit 1; fi
-  if grep -q '^FAIL' "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt" "$run/theory-drive.txt"; then exit 1; fi ;;
+  if grep -q '^FAIL' "$run/staff-drive.txt" "$run/candidate-drive.txt" "$run/org-drive.txt" "$run/bank-drive.txt" "$run/class-drive.txt" "$run/theory-drive.txt" "$run/practical-drive.txt"; then exit 1; fi ;;
  evidence)
   render_evidence; exit $? ;;
  cleanup)

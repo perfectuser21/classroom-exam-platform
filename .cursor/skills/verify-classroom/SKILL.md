@@ -1,6 +1,6 @@
 ---
 name: verify-classroom
-description: Verify real classroom login, organization, bank, roster and R4 theory exam with disposable Moodle identity and retained evidence.
+description: Verify real classroom login, organization, bank, roster R4 theory, R5 practical exams and R6 seat environment with disposable fixtures and retained evidence.
 ---
 
 # Verify classroom
@@ -9,19 +9,19 @@ Run from this repository root. Exercise `gateway.mjs` at `/staff`, `/classes` an
 
 ## Launch
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh launch` starts the gateway on loopback port 18199 with temporary `CLASSROOM_STATE_DIR`, synthetic staff accounts, question/paper publication, assignment and release enabled, and identity verification required. It refuses an occupied port or an outstanding R4 cleanup manifest. Keep all stages in one shell if the runner terminates background processes between calls.
+`./.cursor/skills/verify-classroom/scripts/verify.sh launch` starts the gateway on loopback port 18199 with temporary `CLASSROOM_STATE_DIR`, synthetic staff accounts, question/paper publication, assignment and release enabled, identity verification required, and candidate materials and uploads enabled. It refuses an occupied port or an outstanding R4 cleanup manifest. Keep all stages in one shell if the runner terminates background processes between calls.
 
 ## Doctor
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh doctor` checks both served login pages, the browser runtime, Moodle provisioning/cleanup prerequisites and the enrolled-user API. Missing prerequisites are explicit FAILs.
+`./.cursor/skills/verify-classroom/scripts/verify.sh doctor` checks both served login pages, the browser runtime, Moodle provisioning/cleanup prerequisites and the enrolled-user API. R5 Doctor also checks that candidate materials and uploads are enabled. Missing prerequisites are explicit FAILs.
 
 ## Drive
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh drive` exercises real staff login, organization and role provisioning, specialty and question bank, weighted paper, class/roster and teacher access. The R4 Drive then provisions a disposable phone-username Moodle student and links it to an R3 roster. A real browser creates and assigns a class plan, verifies release guards, releases from the class UI, logs in as the disposable student, submits its answer card and checks the class theory score in both API and UI. Shared candidate credentials are not needed. See [R4 acceptance](features/theory.md).
+`./.cursor/skills/verify-classroom/scripts/verify.sh drive` exercises real staff login, organization and role provisioning, specialty and question bank, weighted paper, class/roster and teacher access. The R4 Drive then provisions a disposable phone-username Moodle student and links it to an R3 roster. A real browser creates and assigns a class plan, verifies release guards, releases from the class UI, logs in as the disposable student, submits its answer card and checks the class theory score in both API and UI. Shared candidate credentials are not needed. The same disposable quiz also runs the [R5 practical path](features/practical.md): taskbook and material delivery, browser download and answer upload, two examiner reviews and confirmed weighted score. See [R4 acceptance](features/theory.md).
 
 ## Evidence
 
-`./.cursor/skills/verify-classroom/scripts/verify.sh evidence` writes `.classroom-evidence/current/result.txt` (override with `CLASSROOM_VERIFY_RUN`). R0–R4 and cleanup receipts are all required: before Cleanup the result explicitly reports missing cleanup and remains FAIL. Sanitized response bodies, screenshots, logs and check results remain in the run directory. The private `theory-private.json` temporarily contains the disposable password and cleanup ownership manifest; do not copy it into reports or commit any run artifacts.
+`./.cursor/skills/verify-classroom/scripts/verify.sh evidence` writes `.classroom-evidence/current/result.txt` (override with `CLASSROOM_VERIFY_RUN`). R0–R5 and cleanup receipts are all required: before Cleanup the result explicitly reports missing cleanup and remains FAIL. Sanitized response bodies, screenshots, logs and check results remain in the run directory. The private `theory-private.json` temporarily contains the disposable password and cleanup ownership manifest; do not copy it into reports or commit any run artifacts.
 
 ## Cleanup
 
@@ -42,4 +42,4 @@ trap - EXIT
 exit "$verify_status"
 ```
 
-R6 acceptance is specified in [seat environment](features/seat-env.md); its Doctor and Drive exercise the guarded install and cleanup path, and report FAIL when a disposable Windows seat or installer is unavailable. `seat-env-cleanup.txt` must verify the owned Windows fixture is removed before overall PASS. R5 remains outside this scope. The harness does not establish student password changes, 50-person browser load or unfinished-only examiner scoring.
+R6 acceptance is specified in [seat environment](features/seat-env.md); its Doctor and Drive exercise the guarded install and cleanup path, and report FAIL when a disposable Windows seat or installer is unavailable. `seat-env-cleanup.txt` must verify the owned Windows fixture is removed before overall PASS. The combined harness requires R0–R5 evidence and the independent R6 receipts. The harness does not establish student password changes, 50-person browser load or unfinished-only examiner scoring.
