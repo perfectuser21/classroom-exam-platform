@@ -1,7 +1,7 @@
 function classroom_participants($eligible, $assigned) {
-    if (!is_array($eligible) || count($eligible) < 5 || count($eligible) > 50 || !is_array($assigned) || count($assigned) !== 5) { return false; }
+    if (!is_array($eligible) || count($eligible) < 1 || count($eligible) > 50 || !is_array($assigned) || count($assigned) < 1 || count($assigned) > 50) { return false; }
     foreach (array_merge($eligible, $assigned) as $id) { if (!is_int($id) || $id < 1) { return false; } }
-    if (count(array_unique($eligible)) !== count($eligible) || count(array_unique($assigned)) !== 5) { return false; }
+    if (count(array_unique($eligible)) !== count($eligible) || count(array_unique($assigned)) !== count($assigned)) { return false; }
     return count(array_diff($assigned, $eligible)) === 0;
 }
 function classroom_enrolled_students($courseid) {

@@ -11,3 +11,7 @@
 Doctor checks both pages; the drives are independent. PASS requires all and evidence retained after cleanup. Login is not a permission-scope test.
 
 | [Classes and roster](class.md) | `/classes`, `/api/classes` | create and edit class; import/export roster and verify teacher ownership | `class-drive.txt` |
+
+| [R4 theory E2E](theory.md) | `/classes`, `/api/class-exam-plans`, `/candidate` | disposable phone student: class plan → guarded UI release → real answer-card submit → class theory score, followed by verified cleanup | `theory-doctor.txt`, `theory-drive.txt`, screenshots, `r4-class-scores.json`, `theory-cleanup.txt` |
+
+R0–R4 PASS now requires all Drive receipts plus Moodle and local cleanup. Evidence remains FAIL while cleanup is pending. R4 uses browser interaction; the earlier R0–R3 drives remain HTTP-driven.

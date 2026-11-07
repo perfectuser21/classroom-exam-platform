@@ -3,5 +3,5 @@ export function prepareExamRelease(assignment){
  const seenVersions=new Set(),seenStudents=new Set(),seenGroups=new Set(),seenModules=new Set();
  const groups=assignment.groups.map(g=>{const rows=assignment.receipt.filter(r=>r.version===g.version);if(!['A','B'].includes(g.version)||seenVersions.has(g.version)||rows.length!==1||!Number.isSafeInteger(rows[0].groupId)||rows[0].groupId<1||seenGroups.has(rows[0].groupId)||!Number.isSafeInteger(g.quizId)||g.quizId<1||!Number.isSafeInteger(g.courseModuleId)||g.courseModuleId<1||seenModules.has(g.courseModuleId)||rows[0].courseModuleId!==g.courseModuleId||!Array.isArray(g.studentIds)||g.studentIds.length<1||rows[0].count!==g.studentIds.length)throw Error('分配回执无效');
   for(const id of g.studentIds){if(!Number.isSafeInteger(id)||id<1||seenStudents.has(id))throw Error('考生分配无效');seenStudents.add(id)}seenVersions.add(g.version);seenGroups.add(rows[0].groupId);seenModules.add(g.courseModuleId);return {version:g.version,quizId:g.quizId,courseModuleId:g.courseModuleId,groupId:rows[0].groupId,studentIds:[...g.studentIds]};});
- if(seenStudents.size!==5)throw Error('必须分配五名考生');return {paperId:assignment.paperId,groups};
+ if(seenStudents.size<1||seenStudents.size>50)throw Error('考生数量须为 1 至 50');return {paperId:assignment.paperId,groups};
 }
