@@ -13,3 +13,6 @@ meshcentral-recordings/
 /.venv
 /.venv-xlsx
 /node_modules
+
+# Local verification artifacts may contain test identity data.
+.classroom-evidence/
