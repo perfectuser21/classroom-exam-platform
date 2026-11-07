@@ -17,12 +17,12 @@ Run from this repository root. This exercises `gateway.mjs` at `/staff` and `/ca
 
 ## Drive
 
-Set `CLASSROOM_VERIFY_CANDIDATE_USER` and `CLASSROOM_VERIFY_CANDIDATE_PASSWORD` in the environment to a dedicated Moodle test account, then run `./.cursor/skills/verify-classroom/scripts/verify.sh drive`. The script submits the real login APIs and checks the class teacher role, Moodle login response, admin organization and role provisioning API, and specialty, bank and weighted draft paper APIs. Missing credentials are an explicit candidate FAIL. This is HTTP-driven verification, not a browser interaction or proof of class/course isolation.
+Set `CLASSROOM_VERIFY_CANDIDATE_USER` and `CLASSROOM_VERIFY_CANDIDATE_PASSWORD` in the environment to a dedicated Moodle test account, then run `./.cursor/skills/verify-classroom/scripts/verify.sh drive`. The script submits the real login APIs and checks the class teacher role, Moodle login response, admin organization and role provisioning API, specialty, bank and weighted draft paper APIs, and class/roster and teacher ownership APIs. Missing credentials are an explicit candidate FAIL. This is HTTP-driven verification, not a browser interaction or proof of class/course isolation.
 
 ## Evidence
 
-Run `./.cursor/skills/verify-classroom/scripts/verify.sh evidence`. Artifacts live under `.classroom-evidence/current/` (override with `CLASSROOM_VERIFY_RUN`); `result.txt` is PASS only if both login surfaces, organization and bank drives pass. HTML snapshots, sanitized response bodies, logs and text results remain there. Do not commit artifacts containing real identity data. See `features/` for feature-specific acceptance and limitations.
+Run `./.cursor/skills/verify-classroom/scripts/verify.sh evidence`. Artifacts live under `.classroom-evidence/current/` (override with `CLASSROOM_VERIFY_RUN`); `result.txt` is PASS only if both login surfaces, organization, bank and class drives pass. HTML snapshots, sanitized response bodies, logs and text results remain there. Do not commit artifacts containing real identity data. See `features/` for feature-specific acceptance and limitations.
 
 ## Cleanup
 
-Always run `./.cursor/skills/verify-classroom/scripts/verify.sh cleanup`, even on failure. It stops only the gateway it launched, deletes its temporary state and cookie, and retains the evidence directory. Re-read `result.txt` after cleanup. This loop does not establish student password changes, scoped class access, or unfinished-only examiner scoring.
+Always run `./.cursor/skills/verify-classroom/scripts/verify.sh cleanup`, even on failure. It stops only the gateway it launched, deletes its temporary state and cookie, and retains the evidence directory. Re-read `result.txt` after cleanup. This loop does not establish student password changes, browser interaction or unfinished-only examiner scoring.
