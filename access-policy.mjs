@@ -1,6 +1,7 @@
 const permissions={admin:new Set(['devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','results.write','results.arbitrate','accounts.manage','questions.read','questions.write','papers.read','papers.write']),staff:new Set(['devices.read','software.run','materials.read','materials.write','answers.read','answers.collect','exam.read','results.read','questions.read','questions.write','papers.read','papers.write']),examiner:new Set(['exam.read','results.read','results.write','answers.read','questions.read','papers.read'])};
 export function mayAccess(role,action){return permissions[role]?.has(action)===true}
 export function routeAction(method,path){
+ if(['GET','POST','PUT','DELETE'].includes(method)&&(path==='/api/org'||path.startsWith('/api/org/')))return 'accounts.manage';
  if(method==='GET'&&(path==='/api/exams'||path==='/api/capabilities'||path==='/api/workflow-catalog'))return 'exam.read';
  if(method==='GET'&&(path==='/api/question-publications'||/^\/api\/question-publications\/[a-f0-9-]+$/.test(path)))return 'questions.read';
  if(method==='POST'&&path==='/api/question-publications')return 'questions.write';

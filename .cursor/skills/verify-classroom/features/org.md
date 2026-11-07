@@ -1,0 +1,7 @@
+# Organization and roles
+
+Drive logs in as a synthetic administrator and exercises company and department creation, rename, listing and deletion, scoped user creation for all five roles, role changes, disable/enable and soft deletion. It checks that populated companies cannot be removed and non-admins are denied. State is temporary; the sanitized check results survive Cleanup.
+
+The admin API requires `X-Classroom-Request: org-management` on mutations. `GET /api/org` lists nodes; `POST /api/org` creates `{type:"company",name}` or `{type:"department",name,parentId}`; `PUT /api/org/:id` renames and `DELETE` removes empty nodes. `GET /api/org/users` lists scoped accounts; `POST` creates `{username,password,role,departmentId,name?}`; `PUT /api/org/users/:username` updates `{role,departmentId,disabled?,name?,idNumber?}`; `DELETE` disables an account. Examiner creation or update requires `name` and `idNumber`. Role names are `admin`, `student`, `class_teacher`, `instructor`, `examiner`. Passwords and identity numbers are never returned. User deletion is a reversible disable; a department with users cannot be deleted.
+
+Student records govern access through the gateway for matching Moodle identities, but creating a record does not create a Moodle account; existing candidate account jobs remain a separate provisioning step. The local account password is for staff authentication and is not the Moodle password. This drive does not create Moodle accounts or verify Moodle-side suspension.

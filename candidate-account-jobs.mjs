@@ -1,5 +1,5 @@
 import {randomUUID,randomBytes} from 'node:crypto';
-const validName=x=>typeof x==='string'&&/^[a-z][a-z0-9_-]{2,39}$/.test(x);
+const validName=x=>typeof x==='string'&&/^(?:[a-z][a-z0-9_-]{2,39}|1[3-9][0-9]{9})$/.test(x);
 const validPerson=x=>typeof x==='string'&&x.trim().length>0&&x.trim().length<=50&&!/[\x00-\x1f]/.test(x);
 export class CandidateAccountJobs{
  constructor({check=async()=>{throw Error('不可用')},saveCredential=async()=>{throw Error('不可用')},createMoodle=async()=>{throw Error('不可用')},generatePassword=()=>('Aa9!'+randomBytes(24).toString('base64url')),storage={load:()=>[],save:()=>{}}}={}){Object.assign(this,{check,saveCredential,createMoodle,generatePassword,storage});const rows=storage.load();if(!Array.isArray(rows))throw Error('考生账号记录无效');this.jobs=new Map();this.running=new Map();this.busy=false;let changed=false;for(const row of rows){if(row.status==='running'){row.status='unknown';changed=true}this.jobs.set(row.id,row)}if(changed)this.persist()}

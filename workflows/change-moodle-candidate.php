@@ -1,6 +1,6 @@
 define('CLI_SCRIPT',true);require '/var/www/html/config.php';require_once $CFG->dirroot.'/user/lib.php';require_once $CFG->dirroot.'/webservice/lib.php';\core\session\manager::set_user(get_admin());
 $input=json_decode(stream_get_contents(STDIN),true,8,JSON_THROW_ON_ERROR);$id=$input['userId']??null;$username=$input['username']??null;$suspended=$input['suspended']??null;
-if(!is_int($id)||$id<1||!is_string($username)||!preg_match('/^[a-z][a-z0-9_-]{2,39}$/',$username)||!is_bool($suspended))throw new RuntimeException('Invalid candidate');
+if(!is_int($id)||$id<1||!is_string($username)||!preg_match('/^(?:[a-z][a-z0-9_-]{2,39}|1[3-9][0-9]{9})$/',$username)||!is_bool($suspended))throw new RuntimeException('Invalid candidate');
 $transaction=$DB->start_delegated_transaction();$user=$DB->get_record('user',['id'=>$id,'username'=>$username,'deleted'=>0],'id,username,suspended',MUST_EXIST);if(is_siteadmin($id))throw new RuntimeException('Invalid candidate');
 user_update_user((object)['id'=>$id,'suspended'=>$suspended?1:0],false,true);if($suspended){webservice::delete_user_ws_tokens($id);\core\session\manager::destroy_user_sessions($id);}
 $updated=$DB->get_record('user',['id'=>$id],'id,username,suspended',MUST_EXIST);if((bool)$updated->suspended!==$suspended)throw new RuntimeException('State unconfirmed');$transaction->allow_commit();echo json_encode(['username'=>$username,'userId'=>(int)$id,'suspended'=>(bool)$updated->suspended],JSON_THROW_ON_ERROR);
